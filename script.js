@@ -94,12 +94,34 @@ window.saveUserData = async function(dataToUpdate) {
         };
 
         onAuthStateChanged(auth, (user) => {
-            if (!user) {
+    isAuthReady = true;
+    if (user) {
+        userId = user.uid;
+        console.log("User is authenticated. User ID:", userId);
+        
+        // Only load user data if on the protected page (index2.html)
+        if (window.location.pathname.endsWith('index2.html')) {
+            loadUserData();
+        }
+    } else {
+        userId = null;
+        console.log("No user is signed in.");
+        
+        // Only redirect to login if user is on a protected page
+        // Protected pages are any page that's NOT index.html
+        const currentPath = window.location.pathname;
+        const isOnLoginPage = currentPath.endsWith('index.html') || currentPath === '/';
+        
+        if (!isOnLoginPage) {
+            // User is not authenticated and on a protected page
+            showNotification('เซสชันหมดอายุ', 'warning', 'กำลังนำคุณไปยังหน้าเข้าสู่ระบบ');
+            setTimeout(() => {
                 window.location.href = 'index.html';
-            } else {
-                document.body.style.display = 'block';
-            }
-        });
+            }, 2000);
+        }
+    }
+    showLoading(false);
+});
 // Login function
 window.login = function() {
     const email = document.getElementById('loginEmail').value;
@@ -554,15 +576,173 @@ function clearForm() {
 
 // Handle Logout
 window.logout = function() {
+    // Check if Firebase auth is ready
     if (!isAuthReady) {
         showNotification('เกิดข้อผิดพลาดในการเชื่อมต่อ', 'error', 'ไม่สามารถออกจากระบบได้ โปรดลองอีกครั้ง');
         return;
     }
+
+    // Show confirmation dialog before logging out
+    const confirmLogout = confirm('คุณต้องการออกจากระบบหรือไม่?');
+    if (!confirmLogout) {
+        return;
+    }
+
+    // Show loading state
+    showLoading(true);
+
     signOut(auth).then(() => {
+        // Clear any local data/cache
+        clearLocalData();
+        
+        // Hide loading state
+        showLoading(false);
+        
+        // Show success notification
         showNotification('ออกจากระบบเรียบร้อยแล้ว', 'success');
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
+        
+    }).catch((error) => {
+        // Hide loading state on error
+        showLoading(false);
+        
+        console.error("Error signing out:", error);
+        
+        // Show error notification with specific error handling
+        let errorMessage = 'เกิดข้อผิดพลาดในการออกจากระบบ';
+        
+        if (error.code === 'auth/network-request-failed') {
+            errorMessage = 'ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้';
+        } else if (error.code === 'auth/too-many-requests') {
+            errorMessage = 'มีการพยายามออกจากระบบมากเกินไป โปรดรอสักครู่';
+        }
+        
+        showNotification(errorMessage, 'error', 'โปรดลองอีกครั้งในภายหลัง');
+        
+        // Force redirect to login page even if logout fails
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 3000);
+    });
+};
+
+// Helper function to clear local data
+function clearLocalData() {
+    // Reset global variables
+    photoData = null;
+    userId = 'guest';
+    
+    // Clear any form data
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        if (form.reset) {
+            form.reset();
+        }
+    });
+    
+    // Clear any cached UI elements
+    const elementsToReset = [
+        'userName', 'bmiResult', 'userLevel', 'totalPoints', 
+        'healthPoints', 'consecutiveDays', 'exerciseStatus'
+    ];
+    
+    elementsToReset.forEach(elementId => {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = '';
+        }
+    });
+    
+    // Hide profile photos and show default placeholders
+    const profilePhoto = document.getElementById('profilePhoto');
+    const profileSvg = document.getElementById('profileSvg');
+    if (profilePhoto && profileSvg) {
+        profilePhoto.classList.add('hidden');
+        profileSvg.classList.remove('hidden');
+    }
+    
+    console.log('Local data cleared');
+}
+
+// Alternative logout function with more robust error handling
+window.logoutWithRetry = function(retryCount = 0) {
+    const maxRetries = 3;
+    
+    if (!isAuthReady) {
+        showNotification('ระบบยังไม่พร้อม', 'warning', 'โปรดรอสักครู่แล้วลองใหม่');
+        return;
+    }
+
+    if (retryCount === 0) {
+        const confirmLogout = confirm('คุณต้องการออกจากระบบหรือไม่?');
+        if (!confirmLogout) {
+            return;
+        }
+        showLoading(true);
+    }
+
+    signOut(auth).then(() => {
+        clearLocalData();
+        showLoading(false);
+        showNotification('ออกจากระบบเรียบร้อยแล้ว', 'success');
+        
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
+        
+    }).catch((error) => {
+        console.error(`Logout attempt ${retryCount + 1} failed:`, error);
+        
+        if (retryCount < maxRetries) {
+            // Retry after a short delay
+            setTimeout(() => {
+                logoutWithRetry(retryCount + 1);
+            }, 1000 * (retryCount + 1)); // Exponential backoff
+            
+            showNotification(`กำลังลองใหม่... (ครั้งที่ ${retryCount + 2})`, 'info');
+        } else {
+            // Max retries reached, force redirect
+            showLoading(false);
+            showNotification('ไม่สามารถออกจากระบบได้', 'error', 'จะนำคุณไปยังหน้าเข้าสู่ระบบ');
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
+    });
+};
+
+// Quick logout function (no confirmation)
+window.quickLogout = function() {
+    if (!isAuthReady) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    signOut(auth).then(() => {
+        clearLocalData();
         window.location.href = 'index.html';
     }).catch((error) => {
-        console.error("Error signing out:", error);
+        console.error("Quick logout error:", error);
+        // Force redirect even on error
+        window.location.href = 'index.html';
+    });
+};
+
+// Automatic logout on authentication state change
+if (auth) {
+    onAuthStateChanged(auth, (user) => {
+        if (!user && window.location.pathname.includes('index2.html')) {
+            // User is not authenticated and on a protected page
+            showNotification('เซสชันหมดอายุ', 'warning', 'กำลังนำคุณไปยังหน้าเข้าสู่ระบบ');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 2000);
+        }
     });
 }
 

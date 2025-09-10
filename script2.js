@@ -22,11 +22,6 @@ function updateExerciseTime(value) {
 function takePhoto() {
     // Check if user can submit today before allowing photo capture
     checkDailySubmissionLimit().then(canSubmit => {
-        if (!canSubmit) {
-            showNotification('คุณส่งข้อมูลไปแล้วจ้านนี้', 'warning', 'สามารถส่งข้อมูลใหม่ได้ในวันพรุ่งนี้');
-            return;
-        }
-        // Simulate camera access
         alert('เปิดกล้องถ่ายภาพ (ฟีเจอร์นี้ต้องการการเชื่อมต่อกับกล้อง)');
     });
 }
@@ -34,10 +29,6 @@ function takePhoto() {
 function uploadPhoto() {
     // Check if user can submit today before allowing photo upload
     checkDailySubmissionLimit().then(canSubmit => {
-        if (!canSubmit) {
-            showNotification('คุณส่งข้อมูลไปแล้วจ้านนี้', 'warning', 'สามารถส่งข้อมูลใหม่ได้ในวันพรุ่งนี้');
-            return;
-        }
         document.getElementById('photoInput').click();
     });
 }
@@ -47,13 +38,6 @@ function handlePhotoUpload(event) {
     if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
         // Double-check submission limit before processing the photo
         checkDailySubmissionLimit().then(canSubmit => {
-            if (!canSubmit) {
-                showNotification('คุณส่งข้อมูลไปแล้วจ้านนี้', 'warning', 'สามารถส่งข้อมูลใหม่ได้ในวันพรุ่งนี้');
-                // Clear the file input
-                event.target.value = '';
-                return;
-            }
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('previewImage').src = e.target.result;
@@ -154,10 +138,6 @@ async function submitData() {
     try {
         // Check if user can submit today
         const canSubmit = await checkDailySubmissionLimit();
-        if (!canSubmit) {
-            showNotification('คุณส่งข้อมูลไปแล้วจ้านนี้', 'warning', 'สามารถส่งข้อมูลใหม่ได้ในวันพรุ่งนี้');
-            return;
-        }
 
         // Check if photo is uploaded
         const photoUploaded = !document.getElementById('photoPreview').classList.contains('hidden');
@@ -374,7 +354,6 @@ async function checkSubmissionStatus() {
                 tomorrow.setDate(tomorrow.getDate() + 1);
                 const tomorrowString = tomorrow.toLocaleDateString('th-TH');
                 
-                showNotification('คุณส่งข้อมูลไปแล้วจ้านนี้', 'info', `สามารถส่งข้อมูลใหม่ได้ในวันพรุ่งนี้ (${tomorrowString})`);
             } else {
                 // Can submit today
                 if (exerciseStatusElement) {

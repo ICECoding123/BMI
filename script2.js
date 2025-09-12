@@ -7,6 +7,9 @@ const auth = getAuth();
 const db = getFirestore();
 const appId = 'default-app-id'; // Make sure this matches your app ID
 
+// Google Apps Script Web App URL - เปลี่ยนเป็น URL ของ Google Apps Script ของคุณ
+const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzwn1o6WGvrWQoiiQbvKb4GXdLeOEvIGYRcY7Nl7BVNdt6yi_2YPBZYjNUGMqYN0IiNg/exec';
+
 // Exercise Time Update
 function updateExerciseTime(value) {
     document.getElementById('currentTime').textContent = value;
@@ -54,27 +57,34 @@ function handlePhotoUpload(event) {
 
 // Check if user can submit today
 async function checkDailySubmissionLimit() {
-    if (!auth.currentUser || !db) {
-        return false;
-    }
-
-    const userId = auth.currentUser.uid;
-    const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'registration_data', 'profile');
-    
     try {
+        if (!auth.currentUser || !db) {
+            console.warn('Auth or DB not available');
+            return false;
+        }
+
+        const userId = auth.currentUser.uid;
+        const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'registration_data', 'profile');
+        
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
             const userData = docSnap.data();
             const lastSubmissionDate = userData.lastExerciseDate;
             const today = new Date().toISOString().split('T')[0];
             
+            console.log('Last submission:', lastSubmissionDate, 'Today:', today);
+            
             // Return false if already submitted today, true if can submit
             return lastSubmissionDate !== today;
         }
+        
+        console.log('No existing data, allowing submission');
         return true; // If no data exists, allow submission
+        
     } catch (error) {
         console.error("Error checking submission limit:", error);
-        return false; // Err on the side of caution
+        // ในกรณี error ให้อนุญาตส่งได้ แต่ log ไว้
+        return true;
     }
 }
 
@@ -119,6 +129,129 @@ async function saveUserData(dataToUpdate) {
     }
 }
 
+// Send data to Google Sheets
+async function sendToGoogleSheets(data, retryCount = 0) {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000; // 2 seconds
+    
+    try {
+        console.log(`Attempt ${retryCount + 1}/${MAX_RETRIES + 1} - Sending to Google Sheets:`, data);
+        
+        // สร้าง AbortController สำหรับ timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+            console.log('Request timeout - aborting');
+            controller.abort();
+        }, 20000); // ลด timeout เป็น 20 วินาที
+
+        // ตรวจสอบ URL ก่อน
+        if (!GOOGLE_APPS_SCRIPT_URL || !GOOGLE_APPS_SCRIPT_URL.startsWith('https://script.google.com')) {
+            throw new Error('Google Apps Script URL ไม่ถูกต้อง');
+        }
+
+        const fetchOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            mode: 'cors', // เพิ่ม CORS mode
+            cache: 'no-cache', // ไม่ใช้ cache
+            signal: controller.signal
+        };
+
+        console.log('Fetch options:', fetchOptions);
+        console.log('Sending to URL:', GOOGLE_APPS_SCRIPT_URL);
+
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, fetchOptions);
+        
+        clearTimeout(timeoutId);
+        
+        console.log('Response received:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            url: response.url,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // อ่าน response
+        const responseText = await response.text();
+        console.log('Response body:', responseText);
+        
+        // พยายาม parse JSON
+        let result;
+        try {
+            result = JSON.parse(responseText);
+            console.log('Parsed response:', result);
+        } catch (parseError) {
+            console.warn('Non-JSON response:', parseError.message);
+            // ถ้า response มี HTML หรือ redirect message
+            if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
+                throw new Error('Google Apps Script ส่งกลับ HTML แทน JSON (อาจเป็น error page)');
+            }
+            // ถือว่าสำเร็จถ้า status OK
+            return {
+                success: true,
+                message: 'Data sent successfully',
+                rawResponse: responseText.substring(0, 200) // เก็บแค่ส่วนแรก
+            };
+        }
+        
+        // ตรวจสอบผลลัพธ์
+        if (result && (result.success === true || result.success === 'true')) {
+            console.log('✅ Google Sheets success:', result);
+            return result;
+        } else if (result && result.error) {
+            throw new Error(`Google Apps Script Error: ${result.error}`);
+        } else {
+            throw new Error(result?.message || 'Unknown response from Google Apps Script');
+        }
+        
+    } catch (error) {
+        console.error(`Attempt ${retryCount + 1} failed:`, error);
+        
+        // จำแนกประเภท error
+        let shouldRetry = false;
+        let errorMessage = error.message;
+
+        if (error.name === 'AbortError') {
+            errorMessage = 'เชื่อมต่อใช้เวลานานเกินไป (timeout)';
+            shouldRetry = true;
+        } else if (error.name === 'TypeError') {
+            if (error.message.includes('fetch')) {
+                errorMessage = 'ไม่สามารถเชื่อมต่อได้ (Network Error)';
+                shouldRetry = true;
+            } else if (error.message.includes('NetworkError')) {
+                errorMessage = 'ปัญหาเครือข่าย กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
+                shouldRetry = true;
+            }
+        } else if (error.message.includes('HTTP 4')) {
+            errorMessage = 'Google Apps Script ไม่อนุญาตให้เข้าถึง (สิทธิ์ไม่เพียงพอ)';
+            shouldRetry = false; // 4xx errors ไม่ควร retry
+        } else if (error.message.includes('HTTP 5')) {
+            errorMessage = 'เซิร์ฟเวอร์ Google มีปัญหา (Server Error)';
+            shouldRetry = true; // 5xx errors ควร retry
+        }
+
+        // Retry logic
+        if (shouldRetry && retryCount < MAX_RETRIES) {
+            console.log(`Retrying in ${RETRY_DELAY}ms... (${retryCount + 1}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            return sendToGoogleSheets(data, retryCount + 1);
+        }
+
+        // Final error
+        const finalError = new Error(`${errorMessage} (หลังจากลอง ${retryCount + 1} ครั้ง)`);
+        finalError.originalError = error;
+        throw finalError;
+    }
+}
+
 // Show notification function (assuming it exists globally or define it here)
 function showNotification(message, type, subtext = '') {
     // If notification function doesn't exist globally, implement it here
@@ -133,11 +266,45 @@ function showNotification(message, type, subtext = '') {
     }
 }
 
-// Submit Data with proper Firestore integration and daily limit check
-async function submitData() {
+// Get user data for Google Sheets
+async function getUserData() {
+    if (!auth.currentUser || !db) {
+        return null;
+    }
+
+    const userId = auth.currentUser.uid;
+    const userDocRef = doc(db, 'artifacts', appId, 'users', userId, 'registration_data', 'profile');
+    
     try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return null;
+    } catch (error) {
+        console.error("Error getting user data:", error);
+        return null;
+    }
+}
+
+// Submit Data with proper Firestore integration and Google Sheets
+async function submitData() {
+    let submitButton;
+    let originalText;
+    
+    try {
+        // เช็ค network ก่อน
+        if (!navigator.onLine) {
+            showNotification('ไม่มีการเชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบ WiFi หรือเครือข่าย', 'error');
+            return;
+        }
+
         // Check if user can submit today
         const canSubmit = await checkDailySubmissionLimit();
+        if (!canSubmit) {
+            showNotification('วันนี้คุณส่งข้อมูลไปแล้ว กรุณารอจนถึงพรุ่งนี้', 'warning');
+            return;
+        }
 
         // Check if photo is uploaded
         const photoUploaded = !document.getElementById('photoPreview').classList.contains('hidden');
@@ -152,86 +319,197 @@ async function submitData() {
             showNotification('กรุณาเข้าสู่ระบบก่อน', 'error');
             return;
         }
-        
-        // Get current points and days
-        const currentPoints = parseInt(document.getElementById('totalPoints').textContent);
-        const currentHealthPoints = parseInt(document.getElementById('healthPoints').textContent);
-        const newPoints = currentPoints + 5;
-        
-        const currentDays = parseInt(document.getElementById('consecutiveDays').textContent);
-        const newDays = currentDays + 1;
-
-        // Calculate new level based on points
-        const newLevel = Math.floor(newPoints / 50); // Level up every 50 points
-        const currentLevel = parseInt(document.getElementById('userLevel').textContent) || 0;
-        
-        // Prepare data to save to Firestore
-        const dataToUpdate = {
-            healthPoints: newPoints,
-            consecutiveDays: newDays,
-            level: newLevel,
-            lastExerciseDate: new Date().toISOString().split('T')[0], // Today's date - THIS IS KEY
-            exerciseStreak: newDays,
-            photoSubmitted: true // Track that photo was submitted
-        };
 
         // Show loading state
-        const submitButton = event?.target || document.querySelector('[onclick="submitData()"]');
-        const originalText = submitButton?.textContent || submitButton?.innerHTML;
+        submitButton = document.querySelector('[onclick="submitData()"]');
+        originalText = submitButton?.textContent || submitButton?.innerHTML || '';
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.innerHTML = '<span>กำลังบันทึก...</span>';
         }
+        
+        // Get all required data
+        const currentPoints = parseInt(document.getElementById('totalPoints').textContent) || 0;
+        const currentHealthPoints = parseInt(document.getElementById('healthPoints').textContent) || 0;
+        const newPoints = currentPoints + 5;
+        
+        const currentDays = parseInt(document.getElementById('consecutiveDays').textContent) || 0;
+        const newDays = currentDays + 1;
 
-        // Save to Firestore first
+        const newLevel = Math.floor(newPoints / 50);
+        const currentLevel = parseInt(document.getElementById('userLevel').textContent) || 0;
+        const exerciseTime = parseInt(document.getElementById('currentTime').textContent) || 30;
+        const photoUrl = document.getElementById('previewImage').src || '';
+        
+        // Get user data
+        const userData = await getUserData();
+        const username = userData?.name || userData?.displayName || auth.currentUser.email || 'ไม่ระบุ';
+
+        // Prepare data
+        const today = new Date().toISOString().split('T')[0];
+        const dataToUpdate = {
+            healthPoints: newPoints,
+            consecutiveDays: newDays,
+            level: newLevel,
+            lastExerciseDate: today,
+            exerciseStreak: newDays,
+            photoSubmitted: true,
+            lastSubmissionTime: new Date().toISOString()
+        };
+
+        const googleSheetsData = {
+            username: username,
+            exerciseTime: exerciseTime,
+            photoUrl: photoUrl.startsWith('data:image/') ? 'มีรูปภาพ' : 'ไม่มีรูป',
+            healthPoints: newPoints,
+            consecutiveDays: newDays,
+            level: newLevel,
+            submissionDate: today,
+            timestamp: new Date().toISOString()
+        };
+
+        console.log('Data prepared:', { dataToUpdate, googleSheetsData });
+
+        // Step 1: Save to Firestore (ต้องสำเร็จก่อน)
+        if (submitButton) {
+            submitButton.innerHTML = '<span>กำลังบันทึกในแอป...</span>';
+        }
+        
         await saveUserData(dataToUpdate);
-        console.log("Data successfully saved to Firestore:", dataToUpdate);
+        console.log("✅ Firestore save successful");
+
+        // Step 2: Try to send to Google Sheets (ไม่บล็อกถ้าไม่สำเร็จ)
+        if (submitButton) {
+            submitButton.innerHTML = '<span>กำลังส่งไป Google Sheets...</span>';
+        }
+
+        let sheetsSuccess = false;
+        try {
+            // ทดสอบการเชื่อมต่อก่อน
+            const connectionTest = await testGoogleAppsScriptConnection();
+            
+            if (!connectionTest.success) {
+                throw new Error(`ไม่สามารถเชื่อมต่อ Google Apps Script ได้ (${connectionTest.error})`);
+            }
+
+            const sheetsResult = await sendToGoogleSheets(googleSheetsData);
+            console.log("✅ Google Sheets success:", sheetsResult);
+            sheetsSuccess = true;
+            
+        } catch (sheetsError) {
+            console.error("❌ Google Sheets failed:", sheetsError);
+            
+            // แสดง error message ที่เฉพาะเจาะจง
+            if (sheetsError.message.includes('timeout')) {
+                showNotification('บันทึกในแอปสำเร็จ! แต่การส่งไป Google Sheets ใช้เวลานานเกินไป', 'warning');
+            } else if (sheetsError.message.includes('Network Error')) {
+                showNotification('บันทึกในแอปสำเร็จ! แต่ไม่สามารถเชื่อมต่อ Google Sheets ได้ในขณะนี้', 'warning');
+            } else {
+                showNotification(`บันทึกในแอปสำเร็จ! ปัญหา Google Sheets: ${sheetsError.message}`, 'warning');
+            }
+        }
+
+        // Update UI regardless of Google Sheets result
+        const exerciseStatusElement = document.getElementById('exerciseStatus');
+        if (exerciseStatusElement) {
+            exerciseStatusElement.textContent = 'วันนี้คุณส่งผลแล้ว ✅';
+            exerciseStatusElement.classList.add('text-green-600');
+        }
         
-        // Update exercise status immediately
-        document.getElementById('exerciseStatus').textContent = 'วันนี้คุณส่งผลแล้ว ✅';
-        
-        // Update UI after successful save
+        // Animate UI updates
         animatePointIncrease('totalPoints', currentPoints, newPoints);
         animatePointIncrease('healthPoints', currentHealthPoints, newPoints);
         document.getElementById('consecutiveDays').textContent = newDays;
         
-        // Update level if it changed
         if (newLevel > currentLevel) {
             document.getElementById('userLevel').textContent = newLevel;
-            renderLevelStars('levelStarsMain', newLevel);
-            renderLevelStars('levelStarsPopup', newLevel);
+            if (window.renderLevelStars) {
+                renderLevelStars('levelStarsMain', newLevel);
+                renderLevelStars('levelStarsPopup', newLevel);
+            }
             showNotification(`ยินดีด้วย! คุณเลื่อนขึ้นสู่เลเวล ${newLevel}!`, 'success');
         }
         
-        showNotification('ส่งข้อมูลสำเร็จ! ได้รับ +5 แต้มสุขภาพ', 'success');
+        // Final success message
+        if (sheetsSuccess) {
+            showNotification('ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +5 แต้ม', 'success');
+        } else {
+            showNotification('บันทึกในแอปสำเร็จ! ได้รับ +5 แต้มสุขภาพ (Google Sheets จะอัพเดทภายหลัง)', 'success');
+        }
         
-        // Disable submit button and update UI to show completion
+        // Disable submit button
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.classList.add('opacity-50', 'cursor-not-allowed');
             submitButton.innerHTML = '<span class="text-2xl">✅</span><span>ส่งข้อมูลแล้วจ้า</span>';
         }
 
-        // Disable photo upload buttons
         disablePhotoButtons();
         
-        // Simulate Google Sheets integration
-        setTimeout(() => {
-            showNotification('ข้อมูลถูกบันทึกลง Google Sheets แล้ว', 'info');
-        }, 1500);
-        
     } catch (error) {
-        console.error("Error in submitData:", error);
-        showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
+        console.error("❌ submitData error:", error);
         
-        // Reset submit button on error
-        const submitButton = event?.target || document.querySelector('[onclick="submitData()"]');
-        if (submitButton) {
+        let errorMessage = 'เกิดข้อผิดพลาดในการบันทึกข้อมูล';
+        
+        if (error.message.includes('User not authenticated')) {
+            errorMessage = 'กรุณาเข้าสู่ระบบใหม่';
+        } else if (error.message.includes('permission-denied')) {
+            errorMessage = 'ไม่มีสิทธิ์เข้าถึงข้อมูล กรุณาเข้าสู่ระบบใหม่';
+        } else if (error.message) {
+            errorMessage = error.message;
+        }
+        
+        showNotification(errorMessage, 'error');
+        
+        // Reset button
+        if (submitButton && originalText) {
             submitButton.disabled = false;
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
             submitButton.innerHTML = originalText;
         }
     }
 }
+
+// ส่วนที่ 4: เพิ่ม listener สำหรับ online/offline status
+window.addEventListener('online', () => {
+    console.log('📶 Connection restored');
+    showNotification('การเชื่อมต่ออินเทอร์เน็ตกลับมาแล้ว', 'info');
+});
+
+window.addEventListener('offline', () => {
+    console.log('📵 Connection lost');
+    showNotification('ไม่มีการเชื่อมต่ออินเทอร์เน็ต', 'warning');
+});
+
+// ส่วนที่ 5: Debug function
+window.debugGoogleSheets = async function() {
+    console.log('=== Debug Google Sheets Connection ===');
+    console.log('URL:', GOOGLE_APPS_SCRIPT_URL);
+    console.log('Online:', navigator.onLine);
+    
+    const testResult = await testGoogleAppsScriptConnection();
+    console.log('Connection test:', testResult);
+    
+    if (testResult.success) {
+        console.log('✅ Connection OK, testing data send...');
+        try {
+            const testData = {
+                username: 'ทดสอบการเชื่อมต่อ',
+                exerciseTime: 30,
+                healthPoints: 100,
+                consecutiveDays: 1,
+                level: 2,
+                submissionDate: new Date().toISOString().split('T')[0]
+            };
+            const result = await sendToGoogleSheets(testData);
+            console.log('✅ Test send successful:', result);
+        } catch (error) {
+            console.log('❌ Test send failed:', error);
+        }
+    } else {
+        console.log('❌ Connection failed');
+    }
+};
 
 // Disable photo upload functionality
 function disablePhotoButtons() {
@@ -401,3 +679,62 @@ document.addEventListener('DOMContentLoaded', function() {
         checkSubmissionStatus();
     }, 2000); // Wait 2 seconds for Firebase to initialize
 });
+function validateSubmissionData(data) {
+    const required = ['username', 'exerciseTime', 'healthPoints'];
+    const missing = required.filter(field => !data[field] && data[field] !== 0);
+    
+    if (missing.length > 0) {
+        throw new Error(`ข้อมูลไม่ครบ: ${missing.join(', ')}`);
+    }
+    
+    // Validate data types
+    if (typeof data.exerciseTime !== 'number' || data.exerciseTime < 0 || data.exerciseTime > 300) {
+        throw new Error('เวลาออกกำลังกายไม่ถูกต้อง (0-300 นาที)');
+    }
+    
+    if (typeof data.healthPoints !== 'number' || data.healthPoints < 0) {
+        throw new Error('คะแนนสุขภาพต้องเป็นตัวเลขบวก');
+    }
+    
+    return true;
+}
+async function testGoogleAppsScriptConnection() {
+    try {
+        console.log('Testing Google Apps Script connection...');
+        
+        if (!GOOGLE_APPS_SCRIPT_URL) {
+            throw new Error('GOOGLE_APPS_SCRIPT_URL ไม่ได้กำหนด');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+            method: 'GET', // ใช้ GET เพื่อทดสอบ
+            mode: 'cors',
+            cache: 'no-cache',
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log('Connection test result:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
+        });
+
+        return {
+            success: response.ok,
+            status: response.status,
+            statusText: response.statusText
+        };
+
+    } catch (error) {
+        console.error('Connection test failed:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}

@@ -55,7 +55,7 @@
                 </svg>
             </div>
             <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-white pulse-green">
-                <span class="text-white text-xs">✓</span>
+                <span class="text-white text-xs">✔</span>
             </div>
         </div>
         <div class="text-center md:text-left flex-shrink-0">
@@ -163,26 +163,20 @@
                     <span class="text-2xl mr-3">📸</span>
                     <h4 class="text-xl font-bold text-gray-800">อัพโหลดภาพการออกกำลังกาย</h4>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <button onclick="takePhoto()" class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <span class="text-lg">ถ่ายภาพ</span>
-                    </button>
-                    <button onclick="uploadPhoto()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="grid grid-cols-1 gap-4 mb-6">
+                    
+                    <button onclick="uploadPhoto()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-6 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-4">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                        <span class="text-lg">อัพโหลดภาพ</span>
+                        <span class="text-2xl">อัพโหลดภาพ</span>
                     </button>
                 </div>
                 <input type="file" id="photoInput" accept=".jpg,.png" style="display: none;" onchange="handlePhotoUpload(event)">
                 <div class="photo-upload-area rounded-2xl p-6 text-center bg-green-50 mx-auto" style="width: 450px; height: 450px;">
                     <div id="uploadPlaceholder" class="flex flex-col items-center justify-center h-full">
                         <span class="text-6xl mb-4 block">📷</span>
-                        <p class="text-gray-600 font-medium text-lg">คลิกปุ่มด้านบนเพื่ถ่ายภาพหรืออัพโหลด</p>
+                        <p class="text-gray-600 font-medium text-lg">คลิกปุ่มด้านบนเพื่อถ่ายภาพหรืออัพโหลด</p>
                         <p class="text-sm text-gray-500 mt-2">รองรับไฟล์ .jpg และ .png เท่านั้น</p>
                         <div class="mt-4 text-sm text-gray-400">
                             <p>ขนาด: 450 x 450 พิกเซล</p>
@@ -208,21 +202,22 @@
                 <div class="w-20 h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-4">
                     <span class="text-4xl">🐰</span>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">เลเวล <span id="popupLevel">0</span></h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">เลเวล <span id="level">0</span></h2>
                 <div id="levelStarsPopup" class="flex justify-center space-x-1 mb-4">
                 </div>
             </div>
             
             <div class="mb-6">
-                <div class="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>EXP</span>
-                    <span>150/180</span>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-4">
-                    <div class="progress-bar h-4 rounded-full" style="width: 83%"></div>
-                </div>
-                <p class="text-xs text-gray-500 mt-1 text-center">อีก 30 EXP เพื่อเลเวล 4</p>
-            </div>
+    <div class="flex justify-between text-sm text-gray-600 mb-2">
+        <span>EXP</span>
+        <span><span id="currentExp">10</span>/<span id="nextLevelExp">50</span></span>
+    </div>
+    <div class="w-full bg-gray-200 rounded-full h-4 relative">
+        <div id="progressBar" class="progress-bar h-4 rounded-full" style="width: 20%"></div>
+    </div>
+    <p id="expToNext" class="text-xs text-gray-500 mt-1 text-center">อีก 40 EXP เพื่อเลเวล 1</p>
+</div>
+
             
             <button onclick="showExpInfo()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full mb-4 transition duration-300">
                 EXP ได้รับอย่างไร

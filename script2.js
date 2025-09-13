@@ -7,9 +7,12 @@ const auth = getAuth();
 const db = getFirestore();
 const appId = 'default-app-id'; // Make sure this matches your app ID
 
-// Google Apps Script Web App URL - เปลี่ยนเป็น URL ของ Google Apps Script ของคุณ
-const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzzwn1o6WGvrWQoiiQbvKb4GXdLeOEvIGYRcY7Nl7BVNdt6yi_2YPBZYjNUGMqYN0IiNg/exec';
+// Sheet.best API URL - เปลี่ยนเป็น URL ของ Google Sheet ที่คุณสร้างใน Sheet.best
+const SHEET_BEST_URL = 'https://sheet.best/api/sheets/49762d95-6c55-4a1f-9a48-0169dce585d6';
 
+// Global variable to store current photo data
+let currentPhotoData = null;
+// Calculate current level from total EXP
 // Exercise Time Update
 function updateExerciseTime(value) {
     document.getElementById('currentTime').textContent = value;
@@ -20,39 +23,125 @@ function updateExerciseTime(value) {
     const progressBar = runner.previousElementSibling;
     progressBar.style.width = percentage + '%';
 }
+function updateExpProgressBar(currentExp, currentLevel) {
+    const currentExpInLevel = currentExp % 50; // EXP ในเลเวลปัจจุบัน (0-49)
+    const nextLevelExp = 50; // EXP ที่ต้องการสำหรับเลเวลถัดไป
+    const expToNext = nextLevelExp - currentExpInLevel;
+    const progressPercentage = (currentExpInLevel / nextLevelExp) * 100;
+    
+    // Update display elements
+    const currentExpElement = document.getElementById('currentExp');
+    const nextLevelExpElement = document.getElementById('nextLevelExp');
+    const expToNextElement = document.getElementById('expToNext');
+    const progressBarElement = document.getElementById('progressBar');
+    const levelElement = document.getElementById('level');
+    
+    if (currentExpElement) currentExpElement.textContent = currentExpInLevel;
+    if (nextLevelExpElement) nextLevelExpElement.textContent = nextLevelExp;
+    if (expToNextElement) {
+        if (expToNext === 0) {
+            expToNextElement.textContent = `ถึงเลเวล ${currentLevel + 1} แล้ว!`;
+        } else {
+            expToNextElement.textContent = `อีก ${expToNext} EXP เพื่อเลเวล ${currentLevel + 1}`;
+        }
+    }
+    if (progressBarElement) {
+        progressBarElement.style.width = `${progressPercentage}%`;
+    }
+    if (levelElement) levelElement.textContent = currentLevel;
+    
+    console.log(`EXP Progress Updated: ${currentExpInLevel}/${nextLevelExp} (${progressPercentage.toFixed(1)}%)`);
+}
 
 // Photo Functions
 function takePhoto() {
     // Check if user can submit today before allowing photo capture
     checkDailySubmissionLimit().then(canSubmit => {
-        alert('เปิดกล้องถ่ายภาพ (ฟีเจอร์นี้ต้องการการเชื่อมต่อกับกล้อง)');
+        if (canSubmit) {
+            alert('เปิดกล้องถ่ายภาพ (ฟีเจอร์นี้ต้องการการเชื่อมต่อกับกล้อง)');
+        } else {
+            alert('วันนี้คุณส่งข้อมูลไปแล้ว กรุณารอจนถึงพรุ่งนี้');
+        }
     });
 }
 
 function uploadPhoto() {
     // Check if user can submit today before allowing photo upload
     checkDailySubmissionLimit().then(canSubmit => {
-        document.getElementById('photoInput').click();
+        if (canSubmit) {
+            document.getElementById('photoInput').click();
+        } else {
+            showNotification('วันนี้คุณส่งข้อมูลไปแล้ว กรุณารอจนถึงพรุ่งนี้', 'warning');
+        }
     });
 }
 
 function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (file && (file.type === 'image/jpeg' || file.type === 'image/png')) {
+        // Check file size (limit to 5MB for Google Sheets)
+        if (file.size > 5 * 1024 * 1024) {
+            showNotification('รูปภาพใหญ่เกินไป กรุณาเลือกรูปที่เล็กกว่า 5MB', 'error');
+            return;
+        }
+
         // Double-check submission limit before processing the photo
         checkDailySubmissionLimit().then(canSubmit => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('previewImage').src = e.target.result;
-                document.getElementById('photoPreview').classList.remove('hidden');
-                document.getElementById('uploadPlaceholder').classList.add('hidden');
-                showNotification('อัพโหลดภาพสำเร็จ!', 'success', 'พร้อมส่งข้อมูลเข้าระบบแล้ว');
-            };
-            reader.readAsDataURL(file);
+            if (canSubmit) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64Data = e.target.result;
+                    currentPhotoData = {
+                        base64: base64Data,
+                        filename: file.name,
+                        size: file.size,
+                        type: file.type
+                    };
+                    
+                    document.getElementById('previewImage').src = base64Data;
+                    document.getElementById('photoPreview').classList.remove('hidden');
+                    document.getElementById('uploadPlaceholder').classList.add('hidden');
+                    showNotification('อัพโหลดภาพสำเร็จ!', 'success', 'พร้อมส่งข้อมูลเข้าระบบแล้ว');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                showNotification('วันนี้คุณส่งข้อมูลไปแล้ว', 'warning');
+            }
         });
     } else {
         showNotification('กรุณาเลือกไฟล์ .jpg หรือ .png เท่านั้น', 'error');
     }
+}
+
+// Compress image to reduce base64 size for Google Sheets
+function compressImage(base64Data, maxWidth = 800, quality = 0.8) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calculate new dimensions
+            let { width, height } = img;
+            
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            
+            console.log(`Image compressed: ${base64Data.length} -> ${compressedBase64.length} chars`);
+            resolve(compressedBase64);
+        };
+        
+        img.src = base64Data;
+    });
 }
 
 // Check if user can submit today
@@ -129,45 +218,51 @@ async function saveUserData(dataToUpdate) {
     }
 }
 
-// Send data to Google Sheets
-async function sendToGoogleSheets(data, retryCount = 0) {
+// Send data to Google Sheets via Sheet.best (with image support)
+async function sendToSheetBest(data, retryCount = 0) {
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 2000; // 2 seconds
     
     try {
-        console.log(`Attempt ${retryCount + 1}/${MAX_RETRIES + 1} - Sending to Google Sheets:`, data);
+        console.log(`Attempt ${retryCount + 1}/${MAX_RETRIES + 1} - Sending to Sheet.best:`, {
+            ...data,
+            image: data.image ? `[Image data: ${data.image.length} chars]` : 'No image'
+        });
         
+        // ตรวจสอบ URL ก่อน
+        if (!SHEET_BEST_URL || !SHEET_BEST_URL.startsWith('https://sheet.best/api/sheets/')) {
+            throw new Error('Sheet.best URL ไม่ถูกต้อง - กรุณาแทนที่ YOUR_SHEET_ID_HERE ด้วย Sheet ID จริง');
+        }
+
         // สร้าง AbortController สำหรับ timeout
         const controller = new AbortController();
         const timeoutId = setTimeout(() => {
             console.log('Request timeout - aborting');
             controller.abort();
-        }, 20000); // ลด timeout เป็น 20 วินาที
+        }, 30000); // เพิ่ม timeout เป็น 30 วินาทีสำหรับการส่งรูป
 
-        // ตรวจสอบ URL ก่อน
-        if (!GOOGLE_APPS_SCRIPT_URL || !GOOGLE_APPS_SCRIPT_URL.startsWith('https://script.google.com')) {
-            throw new Error('Google Apps Script URL ไม่ถูกต้อง');
-        }
+        // Validate ข้อมูลก่อนส่ง
+        validateSubmissionData(data);
 
         const fetchOptions = {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(data),
-            mode: 'cors', // เพิ่ม CORS mode
-            cache: 'no-cache', // ไม่ใช้ cache
+            mode: 'cors',
+            cache: 'no-cache',
             signal: controller.signal
         };
 
-        console.log('Fetch options:', fetchOptions);
-        console.log('Sending to URL:', GOOGLE_APPS_SCRIPT_URL);
+        console.log('Sending to Sheet.best URL:', SHEET_BEST_URL);
 
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, fetchOptions);
+        const response = await fetch(SHEET_BEST_URL, fetchOptions);
         
         clearTimeout(timeoutId);
         
-        console.log('Response received:', {
+        console.log('Sheet.best response:', {
             status: response.status,
             statusText: response.statusText,
             ok: response.ok,
@@ -176,73 +271,77 @@ async function sendToGoogleSheets(data, retryCount = 0) {
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            // Handle specific HTTP errors
+            if (response.status === 400) {
+                throw new Error('ข้อมูลที่ส่งไม่ถูกต้อง (400 Bad Request)');
+            } else if (response.status === 401) {
+                throw new Error('ไม่มีสิทธิ์เข้าถึง Sheet.best API (401 Unauthorized)');
+            } else if (response.status === 403) {
+                throw new Error('การเข้าถึงถูกปฏิเสธ - ตรวจสอบ API key หรือสิทธิ์ (403 Forbidden)');
+            } else if (response.status === 404) {
+                throw new Error('ไม่พบ Google Sheet - ตรวจสอบ Sheet ID (404 Not Found)');
+            } else if (response.status === 413) {
+                throw new Error('ข้อมูลใหญ่เกินไป - ลองส่งรูปที่เล็กกว่า (413 Payload Too Large)');
+            } else if (response.status >= 500) {
+                throw new Error(`เซิร์ฟเวอร์ Sheet.best มีปัญหา (${response.status})`);
+            } else {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
         }
 
         // อ่าน response
         const responseText = await response.text();
-        console.log('Response body:', responseText);
+        console.log('Sheet.best response body:', responseText);
         
         // พยายาม parse JSON
         let result;
         try {
-            result = JSON.parse(responseText);
-            console.log('Parsed response:', result);
+            result = responseText ? JSON.parse(responseText) : { success: true };
+            console.log('Parsed Sheet.best response:', result);
         } catch (parseError) {
-            console.warn('Non-JSON response:', parseError.message);
-            // ถ้า response มี HTML หรือ redirect message
-            if (responseText.includes('<!DOCTYPE html>') || responseText.includes('<html')) {
-                throw new Error('Google Apps Script ส่งกลับ HTML แทน JSON (อาจเป็น error page)');
+            console.log('Response is not JSON, treating as success');
+            // Sheet.best บางครั้งส่งกลับแค่ status 200 โดยไม่มี JSON body
+            if (response.ok) {
+                return {
+                    success: true,
+                    message: 'Data and image sent successfully to Google Sheets',
+                    timestamp: new Date().toISOString()
+                };
             }
-            // ถือว่าสำเร็จถ้า status OK
-            return {
-                success: true,
-                message: 'Data sent successfully',
-                rawResponse: responseText.substring(0, 200) // เก็บแค่ส่วนแรก
-            };
         }
         
-        // ตรวจสอบผลลัพธ์
-        if (result && (result.success === true || result.success === 'true')) {
-            console.log('✅ Google Sheets success:', result);
-            return result;
-        } else if (result && result.error) {
-            throw new Error(`Google Apps Script Error: ${result.error}`);
-        } else {
-            throw new Error(result?.message || 'Unknown response from Google Apps Script');
-        }
+        // Sheet.best จะส่งกลับ status 200 หากส่งสำเร็จ
+        console.log('✅ Sheet.best success:', result || 'Success (no JSON response)');
+        return result || { success: true, message: 'Data sent successfully' };
         
     } catch (error) {
-        console.error(`Attempt ${retryCount + 1} failed:`, error);
+        console.error(`Sheet.best attempt ${retryCount + 1} failed:`, error);
         
         // จำแนกประเภท error
         let shouldRetry = false;
         let errorMessage = error.message;
 
         if (error.name === 'AbortError') {
-            errorMessage = 'เชื่อมต่อใช้เวลานานเกินไป (timeout)';
+            errorMessage = 'การส่งข้อมูลใช้เวลานานเกินไป (timeout)';
             shouldRetry = true;
-        } else if (error.name === 'TypeError') {
-            if (error.message.includes('fetch')) {
-                errorMessage = 'ไม่สามารถเชื่อมต่อได้ (Network Error)';
-                shouldRetry = true;
-            } else if (error.message.includes('NetworkError')) {
-                errorMessage = 'ปัญหาเครือข่าย กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
-                shouldRetry = true;
-            }
-        } else if (error.message.includes('HTTP 4')) {
-            errorMessage = 'Google Apps Script ไม่อนุญาตให้เข้าถึง (สิทธิ์ไม่เพียงพอ)';
-            shouldRetry = false; // 4xx errors ไม่ควร retry
-        } else if (error.message.includes('HTTP 5')) {
-            errorMessage = 'เซิร์ฟเวอร์ Google มีปัญหา (Server Error)';
-            shouldRetry = true; // 5xx errors ควร retry
+        } else if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            errorMessage = 'ไม่สามารถเชื่อมต่อได้ (Network Error)';
+            shouldRetry = true;
+        } else if (error.message.includes('500')) {
+            errorMessage = 'เซิร์ฟเวอร์ Sheet.best มีปัญหาชั่วคราว';
+            shouldRetry = true;
+        } else if (error.message.includes('413')) {
+            errorMessage = 'รูปภาพใหญ่เกินไป - กรุณาลดขนาดรูป';
+            shouldRetry = false; // Don't retry for payload too large
+        } else if (error.message.includes('400') || error.message.includes('404')) {
+            shouldRetry = false; // Client errors ไม่ควร retry
         }
 
         // Retry logic
         if (shouldRetry && retryCount < MAX_RETRIES) {
             console.log(`Retrying in ${RETRY_DELAY}ms... (${retryCount + 1}/${MAX_RETRIES})`);
             await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-            return sendToGoogleSheets(data, retryCount + 1);
+            return sendToSheetBest(data, retryCount + 1);
         }
 
         // Final error
@@ -287,7 +386,7 @@ async function getUserData() {
     }
 }
 
-// Submit Data with proper Firestore integration and Google Sheets
+// Submit Data with proper Firestore integration and Sheet.best (including image)
 async function submitData() {
     let submitButton;
     let originalText;
@@ -309,7 +408,7 @@ async function submitData() {
         // Check if photo is uploaded
         const photoUploaded = !document.getElementById('photoPreview').classList.contains('hidden');
         
-        if (!photoUploaded) {
+        if (!photoUploaded || !currentPhotoData) {
             showNotification('กรุณาอัพโหลดภาพก่อนส่งข้อมูล', 'error');
             return;
         }
@@ -332,43 +431,60 @@ async function submitData() {
         const currentPoints = parseInt(document.getElementById('totalPoints').textContent) || 0;
         const currentHealthPoints = parseInt(document.getElementById('healthPoints').textContent) || 0;
         const newPoints = currentPoints + 5;
-        
         const currentDays = parseInt(document.getElementById('consecutiveDays').textContent) || 0;
         const newDays = currentDays + 1;
 
         const newLevel = Math.floor(newPoints / 50);
         const currentLevel = parseInt(document.getElementById('userLevel').textContent) || 0;
         const exerciseTime = parseInt(document.getElementById('currentTime').textContent) || 30;
-        const photoUrl = document.getElementById('previewImage').src || '';
         
         // Get user data
         const userData = await getUserData();
         const username = userData?.name || userData?.displayName || auth.currentUser.email || 'ไม่ระบุ';
-
+        const currentExp = userData?.exp || parseInt(document.getElementById('currentExp')?.textContent) || 0;
+        const newExp = currentExp + 5;
         // Prepare data
         const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        
         const dataToUpdate = {
             healthPoints: newPoints,
             consecutiveDays: newDays,
             level: newLevel,
+            exp: newExp,  // เพิ่มบรรทัดนี้
             lastExerciseDate: today,
             exerciseStreak: newDays,
             photoSubmitted: true,
-            lastSubmissionTime: new Date().toISOString()
+            lastSubmissionTime: now.toISOString()
         };
 
-        const googleSheetsData = {
+        // Compress image for Google Sheets
+        if (submitButton) {
+            submitButton.innerHTML = '<span>กำลังบีบอัดรูปภาพ...</span>';
+        }
+        
+        const compressedImage = await compressImage(currentPhotoData.base64, 600, 0.7);
+
+        // Sheet.best ต้องการ flat object structure รวมถึงรูปภาพ
+        const sheetData = {
+            timestamp: now.toISOString(),
+            date: today,
+            time: now.toLocaleTimeString('th-TH'),
             username: username,
             exerciseTime: exerciseTime,
-            photoUrl: photoUrl.startsWith('data:image/') ? 'มีรูปภาพ' : 'ไม่มีรูป',
             healthPoints: newPoints,
             consecutiveDays: newDays,
             level: newLevel,
-            submissionDate: today,
-            timestamp: new Date().toISOString()
+            hasPhoto: 'Yes',
+            image: compressedImage, // ส่งรูปในรูปแบบ base64
+            imageFilename: currentPhotoData.filename,
+            imageSize: currentPhotoData.size,
+            imageType: currentPhotoData.type,
+            submissionStatus: 'Success',
+            notes: `Exercise: ${exerciseTime} minutes, Level: ${newLevel}, Photo: ${currentPhotoData.filename}`
         };
 
-        console.log('Data prepared:', { dataToUpdate, googleSheetsData });
+        console.log('Data prepared:', { dataToUpdate, sheetDataSize: JSON.stringify(sheetData).length });
 
         // Step 1: Save to Firestore (ต้องสำเร็จก่อน)
         if (submitButton) {
@@ -378,32 +494,29 @@ async function submitData() {
         await saveUserData(dataToUpdate);
         console.log("✅ Firestore save successful");
 
-        // Step 2: Try to send to Google Sheets (ไม่บล็อกถ้าไม่สำเร็จ)
+        // Step 2: Try to send to Google Sheets via Sheet.best (รวมรูปภาพ)
         if (submitButton) {
-            submitButton.innerHTML = '<span>กำลังส่งไป Google Sheets...</span>';
+            submitButton.innerHTML = '<span>กำลังส่งไป Google Sheets พร้อมรูปภาพ...</span>';
         }
 
         let sheetsSuccess = false;
         try {
-            // ทดสอบการเชื่อมต่อก่อน
-            const connectionTest = await testGoogleAppsScriptConnection();
-            
-            if (!connectionTest.success) {
-                throw new Error(`ไม่สามารถเชื่อมต่อ Google Apps Script ได้ (${connectionTest.error})`);
-            }
-
-            const sheetsResult = await sendToGoogleSheets(googleSheetsData);
-            console.log("✅ Google Sheets success:", sheetsResult);
+            const sheetsResult = await sendToSheetBest(sheetData);
+            console.log("✅ Sheet.best success (with image):", sheetsResult);
             sheetsSuccess = true;
             
         } catch (sheetsError) {
-            console.error("❌ Google Sheets failed:", sheetsError);
+            console.error("❌ Sheet.best failed:", sheetsError);
             
             // แสดง error message ที่เฉพาะเจาะจง
             if (sheetsError.message.includes('timeout')) {
                 showNotification('บันทึกในแอปสำเร็จ! แต่การส่งไป Google Sheets ใช้เวลานานเกินไป', 'warning');
             } else if (sheetsError.message.includes('Network Error')) {
                 showNotification('บันทึกในแอปสำเร็จ! แต่ไม่สามารถเชื่อมต่อ Google Sheets ได้ในขณะนี้', 'warning');
+            } else if (sheetsError.message.includes('413') || sheetsError.message.includes('ใหญ่เกินไป')) {
+                showNotification('บันทึกในแอปสำเร็จ! แต่รูปภาพใหญ่เกินไปสำหรับ Google Sheets', 'warning');
+            } else if (sheetsError.message.includes('YOUR_SHEET_ID_HERE')) {
+                showNotification('บันทึกในแอปสำเร็จ! กรุณาตั้งค่า Sheet.best URL ในโค้ด', 'warning');
             } else {
                 showNotification(`บันทึกในแอปสำเร็จ! ปัญหา Google Sheets: ${sheetsError.message}`, 'warning');
             }
@@ -432,10 +545,13 @@ async function submitData() {
         
         // Final success message
         if (sheetsSuccess) {
-            showNotification('ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +5 แต้ม', 'success');
+            showNotification('ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +5 แต้ม (รวมรูปภาพ)', 'success');
         } else {
             showNotification('บันทึกในแอปสำเร็จ! ได้รับ +5 แต้มสุขภาพ (Google Sheets จะอัพเดทภายหลัง)', 'success');
         }
+        
+        // Clear photo data
+        currentPhotoData = null;
         
         // Disable submit button
         if (submitButton) {
@@ -470,65 +586,73 @@ async function submitData() {
     }
 }
 
-// ส่วนที่ 4: เพิ่ม listener สำหรับ online/offline status
+// เพิ่ม listener สำหรับ online/offline status
 window.addEventListener('online', () => {
-    console.log('📶 Connection restored');
+    console.log('🟢 Connection restored');
     showNotification('การเชื่อมต่ออินเทอร์เน็ตกลับมาแล้ว', 'info');
 });
 
 window.addEventListener('offline', () => {
-    console.log('📵 Connection lost');
+    console.log('🔴 Connection lost');
     showNotification('ไม่มีการเชื่อมต่ออินเทอร์เน็ต', 'warning');
 });
 
-// ส่วนที่ 5: Debug function
-window.debugGoogleSheets = async function() {
-    console.log('=== Debug Google Sheets Connection ===');
-    console.log('URL:', GOOGLE_APPS_SCRIPT_URL);
+// Debug function for testing Sheet.best connection with image
+window.debugSheetBest = async function() {
+    console.log('=== Debug Sheet.best Connection (with Image) ===');
+    console.log('URL:', SHEET_BEST_URL);
     console.log('Online:', navigator.onLine);
     
-    const testResult = await testGoogleAppsScriptConnection();
-    console.log('Connection test:', testResult);
+    if (SHEET_BEST_URL.includes('YOUR_SHEET_ID_HERE')) {
+        console.log('❌ กรุณาแทนที่ SHEET_BEST_URL ด้วย URL จริงจาก Sheet.best');
+        console.log('ขั้นตอนการตั้งค่า:');
+        console.log('1. ไปที่ https://sheet.best');
+        console.log('2. สร้าง/เลือก Google Sheet');
+        console.log('3. ใส่หัวตารางในแถวแรก: timestamp, date, time, username, exerciseTime, healthPoints, consecutiveDays, level, hasPhoto, image, imageFilename, imageSize, imageType, submissionStatus, notes');
+        console.log('4. Connect กับ Sheet.best');
+        console.log('5. คัดลอก URL ที่ได้มาใส่ในโค้ดบรรทัดที่ 9');
+        return;
+    }
     
-    if (testResult.success) {
-        console.log('✅ Connection OK, testing data send...');
-        try {
-            const testData = {
-                username: 'ทดสอบการเชื่อมต่อ',
-                exerciseTime: 30,
-                healthPoints: 100,
-                consecutiveDays: 1,
-                level: 2,
-                submissionDate: new Date().toISOString().split('T')[0]
-            };
-            const result = await sendToGoogleSheets(testData);
-            console.log('✅ Test send successful:', result);
-        } catch (error) {
-            console.log('❌ Test send failed:', error);
-        }
-    } else {
-        console.log('❌ Connection failed');
+    // Create a small test image (1x1 pixel red dot)
+    const canvas = document.createElement('canvas');
+    canvas.width = 1;
+    canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'red';
+    ctx.fillRect(0, 0, 1, 1);
+    const testImageBase64 = canvas.toDataURL('image/png');
+    
+    console.log('✅ Testing data send with image...');
+    try {
+        const testData = {
+            timestamp: new Date().toISOString(),
+            date: new Date().toISOString().split('T')[0],
+            time: new Date().toLocaleTimeString('th-TH'),
+            username: 'ทดสอบการเชื่อมต่อ',
+            exerciseTime: 30,
+            healthPoints: 100,
+            consecutiveDays: 1,
+            level: 2,
+            hasPhoto: 'Yes',
+            image: testImageBase64,
+            imageFilename: 'test-image.png',
+            imageSize: testImageBase64.length,
+            imageType: 'image/png',
+            submissionStatus: 'Test',
+            notes: 'This is a test submission with image'
+        };
+        const result = await sendToSheetBest(testData);
+        console.log('✅ Test send with image successful:', result);
+        alert('การทดสอบ Sheet.best สำเร็จ (รวมรูปภาพ)! ตรวจสอบ Google Sheet ของคุณ');
+    } catch (error) {
+        console.log('❌ Test send failed:', error);
+        alert(`การทดสอบล้มเหลว: ${error.message}`);
     }
 };
 
 // Disable photo upload functionality
 function disablePhotoButtons() {
-    const takePhotoBtn = document.querySelector('[onclick="takePhoto()"]');
-    const uploadPhotoBtn = document.querySelector('[onclick="uploadPhoto()"]');
-    
-    if (takePhotoBtn) {
-        takePhotoBtn.disabled = true;
-        takePhotoBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-    
-    if (uploadPhotoBtn) {
-        uploadPhotoBtn.disabled = true;
-        uploadPhotoBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    }
-}
-
-// Enable photo upload functionality
-function enablePhotoButtons() {
     const takePhotoBtn = document.querySelector('[onclick="takePhoto()"]');
     const uploadPhotoBtn = document.querySelector('[onclick="uploadPhoto()"]');
     
@@ -627,11 +751,6 @@ async function checkSubmissionStatus() {
                 // Disable photo buttons
                 disablePhotoButtons();
                 
-                // Show next submission time
-                const tomorrow = new Date();
-                tomorrow.setDate(tomorrow.getDate() + 1);
-                const tomorrowString = tomorrow.toLocaleDateString('th-TH');
-                
             } else {
                 // Can submit today
                 if (exerciseStatusElement) {
@@ -657,28 +776,7 @@ async function checkSubmissionStatus() {
     }
 }
 
-// Make functions available globally
-window.updateExerciseTime = updateExerciseTime;
-window.takePhoto = takePhoto;
-window.uploadPhoto = uploadPhoto;
-window.handlePhotoUpload = handlePhotoUpload;
-window.showLevelPopup = showLevelPopup;
-window.closeLevelPopup = closeLevelPopup;
-window.showExpInfo = showExpInfo;
-window.closeExpInfo = closeExpInfo;
-window.submitData = submitData;
-window.checkSubmissionStatus = checkSubmissionStatus;
-window.checkDailySubmissionLimit = checkDailySubmissionLimit;
-
-// Initialize slider and check submission status
-document.addEventListener('DOMContentLoaded', function() {
-    updateExerciseTime(30);
-    
-    // Check submission status when page loads
-    setTimeout(() => {
-        checkSubmissionStatus();
-    }, 2000); // Wait 2 seconds for Firebase to initialize
-});
+// Validate submission data (including image)
 function validateSubmissionData(data) {
     const required = ['username', 'exerciseTime', 'healthPoints'];
     const missing = required.filter(field => !data[field] && data[field] !== 0);
@@ -696,45 +794,73 @@ function validateSubmissionData(data) {
         throw new Error('คะแนนสุขภาพต้องเป็นตัวเลขบวก');
     }
     
+    // Validate image if present
+    if (data.image) {
+        if (typeof data.image !== 'string' || !data.image.startsWith('data:image/')) {
+            throw new Error('รูปภาพไม่ถูกต้อง');
+        }
+        
+        // Check approximate size (base64 is ~1.33x larger than original)
+        if (data.image.length > 7000000) { // ~5MB in base64
+            throw new Error('รูปภาพใหญ่เกินไป (เกิน 5MB)');
+        }
+    }
+    
     return true;
 }
-async function testGoogleAppsScriptConnection() {
-    try {
-        console.log('Testing Google Apps Script connection...');
-        
-        if (!GOOGLE_APPS_SCRIPT_URL) {
-            throw new Error('GOOGLE_APPS_SCRIPT_URL ไม่ได้กำหนด');
-        }
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
-            method: 'GET', // ใช้ GET เพื่อทดสอบ
-            mode: 'cors',
-            cache: 'no-cache',
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        console.log('Connection test result:', {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok
-        });
-
-        return {
-            success: response.ok,
-            status: response.status,
-            statusText: response.statusText
-        };
-
-    } catch (error) {
-        console.error('Connection test failed:', error);
-        return {
-            success: false,
-            error: error.message
-        };
+// Clear photo preview
+function clearPhotoPreview() {
+    currentPhotoData = null;
+    document.getElementById('photoPreview').classList.add('hidden');
+    document.getElementById('uploadPlaceholder').classList.remove('hidden');
+    document.getElementById('previewImage').src = '';
+    
+    // Reset file input
+    const photoInput = document.getElementById('photoInput');
+    if (photoInput) {
+        photoInput.value = '';
     }
 }
+
+// Add function to handle photo removal
+function removePhoto() {
+    clearPhotoPreview();
+    showNotification('ลบรูปภาพแล้ว', 'info');
+}
+
+// Enhanced photo preview with remove button
+function enhancePhotoPreview() {
+    const photoPreview = document.getElementById('photoPreview');
+    if (!photoPreview) return;
+    
+    // Add remove button if not exists
+    let removeBtn = photoPreview.querySelector('.remove-photo-btn');
+    if (!removeBtn) {
+        removeBtn = document.createElement('button');
+        removeBtn.className = 'remove-photo-btn absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold';
+        removeBtn.innerHTML = '×';
+        removeBtn.onclick = removePhoto;
+        removeBtn.title = 'ลบรูปภาพ';
+        
+        if (photoPreview.style.position !== 'absolute') {
+            photoPreview.style.position = 'relative';
+        }
+        
+        photoPreview.appendChild(removeBtn);
+    }
+}
+// Make functions available globally
+window.updateExerciseTime = updateExerciseTime;
+window.takePhoto = takePhoto;
+window.uploadPhoto = uploadPhoto;
+window.handlePhotoUpload = handlePhotoUpload;
+window.showLevelPopup = showLevelPopup;
+window.closeLevelPopup = closeLevelPopup;
+window.showExpInfo = showExpInfo;
+window.closeExpInfo = closeExpInfo;
+window.submitData = submitData;
+window.checkSubmissionStatus = checkSubmissionStatus;
+window.checkDailySubmissionLimit = checkDailySubmissionLimit;
+window.removePhoto = removePhoto;
+window.clearPhotoPreview = clearPhotoPreview;

@@ -521,7 +521,7 @@ async function submitData() {
             submitButton.innerHTML = '<span>กำลังบีบอัดรูปภาพ...</span>';
         }
         
-        const compressedImage = await compressImage(currentPhotoData.base64, 600, 0.7);
+        const compressedImage = await compressImage(currentPhotoData.base64, 400, 0.5);
 
         const sheetData = {
             timestamp: now.toISOString(),
@@ -649,7 +649,7 @@ async function submitData() {
 }
 
 // Compress image function
-function compressImage(base64Data, maxWidth = 800, quality = 0.8) {
+function compressImage(base64Data, maxWidth = 400, quality = 0.6) {
     return new Promise((resolve) => {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
@@ -658,19 +658,75 @@ function compressImage(base64Data, maxWidth = 800, quality = 0.8) {
         img.onload = function() {
             let { width, height } = img;
             
-            if (width > maxWidth) {
-                height = (height * maxWidth) / width;
-                width = maxWidth;
+            // Calculate new dimensions while maintaining aspect ratio
+            const aspectRatio = width / height;
+            
+            if (width > height) {
+                // Landscape orientation
+                if (width > maxWidth) {
+                    width = maxWidth;
+                    height = Math.round(maxWidth / aspectRatio);
+                }
+            } else {
+                // Portrait orientation
+                const maxHeight = maxWidth;
+                if (height > maxHeight) {
+                    height = maxHeight;
+                    width = Math.round(maxHeight * aspectRatio);
+                }
             }
             
             canvas.width = width;
             canvas.height = height;
             
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            // Enable image smoothing for better quality at smaller sizes
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             
-            console.log(`Image compressed: ${base64Data.length} -> ${compressedBase64.length} chars`);
+            // Draw the resized image
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to JPEG with specified quality for better compression
+            let compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+            
+            // If still too large, reduce quality further
+            let attempts = 0;
+            const maxAttempts = 5;
+            const targetSizeKB = 100; // Target 100KB max
+            
+            while (compressedBase64.length > targetSizeKB * 1365 && attempts < maxAttempts && quality > 0.1) {
+                quality -= 0.1;
+                compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                attempts++;
+            }
+            
+            // If still too large, reduce dimensions further
+            if (compressedBase64.length > targetSizeKB * 1365 && attempts >= maxAttempts) {
+                width = Math.round(width * 0.8);
+                height = Math.round(height * 0.8);
+                
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+            }
+            
+            const originalSizeKB = Math.round(base64Data.length / 1365); // Approximate KB
+            const compressedSizeKB = Math.round(compressedBase64.length / 1365); // Approximate KB
+            const compressionRatio = Math.round((1 - compressedSizeKB / originalSizeKB) * 100);
+            
+            console.log(`Image compression complete:`);
+            console.log(`- Original: ${originalSizeKB}KB`);
+            console.log(`- Compressed: ${compressedSizeKB}KB (${compressionRatio}% reduction)`);
+            console.log(`- Dimensions: ${width}x${height}`);
+            console.log(`- Quality: ${Math.round(quality * 100)}%`);
+            
             resolve(compressedBase64);
+        };
+        
+        img.onerror = function() {
+            console.error('Failed to load image for compression');
+            resolve(base64Data); // Return original if compression fails
         };
         
         img.src = base64Data;

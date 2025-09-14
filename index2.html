@@ -7,6 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style2.css">
     
+    <style>
+        
+        @keyframes pulse-green {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+    </style>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
@@ -45,11 +59,11 @@
             <div class="flex flex-col items-center justify-center space-y-4 sm:space-y-6 lg:flex-row lg:space-y-0 lg:space-x-8 xl:space-x-12">
                 <!-- Logo -->
                 <div class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 flex-shrink-0">
-    <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
-</div>
+                    <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
+                </div>
                 
                 <!-- Profile Photo -->
-                 <div class="relative flex-shrink-0">
+                <div class="relative flex-shrink-0">
                     <div id="profilePhotoContainer" class="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 lg:w-72 lg:h-72 xl:w-80 xl:h-80 bg-gradient-to-br from-green-200 via-green-300 to-green-400 rounded-full flex items-center justify-center shadow-lg sm:shadow-xl border-2 sm:border-4 border-white transition-transform transform hover:scale-110">
                         <img id="profilePhoto" class="w-full h-full object-cover rounded-full hidden" alt="รูปโปรไฟล์ผู้ใช้">
                         <svg id="profileSvg" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-40 xl:h-40 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,30 +101,29 @@
             </div>
             
             <!-- Level Badge -->
-            
-<div class="level-badge rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
-    <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-        <div class="flex items-center space-x-3 sm:space-x-4">
-            <div onclick="showLevelPopup()" class="cursor-pointer transform hover:scale-110 transition-all duration-300">
-                <div id="levelProfileContainer" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-orange-200 to-orange-400 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white">
-                    <span class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">🐰</span>
+            <div class="level-badge rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
+                <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+                    <div class="flex items-center space-x-3 sm:space-x-4">
+                        <div onclick="showLevelPopup()" class="cursor-pointer transform hover:scale-110 transition-all duration-300">
+                            <div id="levelProfileContainer" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-orange-200 to-orange-400 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white">
+                                <span class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">🐰</span>
+                            </div>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <p class="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2">เลเวล <span id="userLevel">0</span></p>
+                            <div id="levelStarsMain" class="flex justify-center sm:justify-start space-x-1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm text-center">
+                        <p class="text-xs sm:text-sm font-medium mb-1">BMI ล่าสุด</p>
+                        <div class="bmi-indicator">
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold" id="bmiResult">-</p>
+                            <p class="text-xs opacity-90" id="bmiStatus">รอการคำนวณ</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="text-center sm:text-left">
-                <p class="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2">เลเวล <span id="userLevel">0</span></p>
-                <div id="levelStarsMain" class="flex justify-center sm:justify-start space-x-1">
-                </div>
-            </div>
-        </div>
-        <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm text-center">
-            <p class="text-xs sm:text-sm font-medium mb-1">BMI ล่าสุด</p>
-            <div class="bmi-indicator">
-                <p class="text-xl sm:text-2xl lg:text-3xl font-bold" id="bmiResult">-</p>
-                <p class="text-xs opacity-90" id="bmiStatus">รอการคำนวด</p>
-            </div>
-        </div>
-    </div>
-</div>
 
             <!-- Exercise Card -->
             <div class="exercise-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
@@ -170,20 +183,53 @@
                     <span class="text-xl sm:text-2xl mr-3">📸</span>
                     <h4 class="text-base sm:text-lg lg:text-xl font-bold text-gray-800">อัพโหลดภาพการออกกำลังกาย</h4>
                 </div>
-                <div class="mb-4 sm:mb-6">
-                    <button onclick="uploadPhoto()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 sm:py-6 px-4 sm:px-8 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 sm:space-x-4">
-                        <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                
+                <!-- ปุ่มเลือกประเภทการอัพโหลด -->
+                <div class="flex flex-col sm:flex-row gap-3 mb-4 sm:mb-6">
+                    <button onclick="openCamera()" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 sm:space-x-3">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         </svg>
-                        <span class="text-base sm:text-lg lg:text-2xl">อัพโหลดภาพ</span>
+                        <span class="text-sm sm:text-base lg:text-lg">ถ่ายภาพ</span>
+                    </button>
+                    
+                    <button onclick="selectFromGallery()" class="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2 sm:space-x-3">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        <span class="text-sm sm:text-base lg:text-lg">เลือกจากแกลเลอรี่</span>
                     </button>
                 </div>
-                <input type="file" id="photoInput" accept=".jpg,.png" style="display: none;" onchange="handlePhotoUpload(event)">
-                <div class="photo-upload-area rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center bg-green-50 mx-auto">
+                
+                <!-- Input Files สำหรับมือถือ -->
+                <input type="file" 
+                       id="cameraInput" 
+                       accept="image/*" 
+                       capture="environment" 
+                       style="display: none;" 
+                       onchange="handlePhotoUpload(event)">
+                       
+                <input type="file" 
+                       id="galleryInput" 
+                       accept="image/*,image/jpeg,image/jpg,image/png" 
+                       style="display: none;" 
+                       onchange="handlePhotoUpload(event)">
+                
+                <!-- หรือใช้ input เดิมแบบปรับปรุง -->
+                <input type="file" 
+                       id="photoInput" 
+                       accept="image/*,image/jpeg,image/jpg,image/png" 
+                       capture="environment" 
+                       style="display: none;" 
+                       onchange="handlePhotoUpload(event)">
+                
+                <!-- พื้นที่แสดงภาพ -->
+                <div class="photo-upload-area rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center bg-green-50 mx-auto border-2 border-dashed border-green-300 hover:border-green-400 transition-all duration-300">
                     <div id="uploadPlaceholder" class="flex flex-col items-center justify-center h-full min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
                         <span class="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4 block">📷</span>
                         <p class="text-gray-600 font-medium text-sm sm:text-base lg:text-lg mb-2">คลิกปุ่มด้านบนเพื่อถ่ายภาพหรืออัพโหลด</p>
-                        <p class="text-xs sm:text-sm text-gray-500">รองรับไฟล์ .jpg และ .png เท่านั้น</p>
+                        <p class="text-xs sm:text-sm text-gray-500">รองรับไฟล์ภาพทุกประเภท</p>
                     </div>
                     <div id="photoPreview" class="hidden h-full flex flex-col">
                         <img id="previewImage" class="w-full max-w-md mx-auto h-auto object-cover rounded-xl sm:rounded-2xl shadow-lg" alt="ภาพตัวอย่าง">
@@ -238,29 +284,29 @@
         <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md w-full shadow-2xl">
             <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">รายละเอียดเงื่อนไข</h2>
             
-           <div class="bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
-    <table class="w-full text-xs sm:text-sm text-white">
-        <thead>
-            <tr class="border-b border-green-200">
-                <th class="text-left py-2 font-semibold text-white">เงื่อนไข</th>
-                <th class="text-center py-2 font-semibold text-white">แต้มสุขภาพ</th>
-                <th class="text-center py-2 font-semibold text-white">EXP</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr class="border-b border-green-100">
-                <td class="py-2 text-white">ลงทะเบียนใหม่</td>
-                <td class="text-center py-2 text-white">10 แต้ม</td>
-                <td class="text-center py-2 text-white">10 EXP</td>
-            </tr>
-            <tr>
-                <td class="py-2 text-white">ส่งข้อมูลขยับเข้าระบบ</td>
-                <td class="text-center py-2 text-white">5 แต้ม</td>
-                <td class="text-center py-2 text-white">5 EXP</td>
-            </tr>
-        </tbody>
-    </table>
-</div>
+            <div class="bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
+                <table class="w-full text-xs sm:text-sm">
+                    <thead>
+                        <tr class="border-b border-green-200">
+                            <th class="text-left py-2 font-semibold text-gray-700">เงื่อนไข</th>
+                            <th class="text-center py-2 font-semibold text-gray-700">แต้มสุขภาพ</th>
+                            <th class="text-center py-2 font-semibold text-gray-700">EXP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-green-100">
+                            <td class="py-2 text-gray-600">ลงทะเบียนใหม่</td>
+                            <td class="text-center py-2 text-gray-600">10 แต้ม</td>
+                            <td class="text-center py-2 text-gray-600">10 EXP</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2 text-gray-600">ส่งข้อมูลขยับเข้าระบบ</td>
+                            <td class="text-center py-2 text-gray-600">5 แต้ม</td>
+                            <td class="text-center py-2 text-gray-600">5 EXP</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             
             <button onclick="closeExpInfo()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-full transition duration-300 text-sm sm:text-base">
                 เข้าใจแล้ว
@@ -277,6 +323,168 @@
             <span>ออกจากระบบ</span>
         </button>
     </div>
+
+    <script>
+        // JavaScript functions สำหรับการทำงานกับมือถือ
+        function openCamera() {
+            const cameraInput = document.getElementById('cameraInput');
+            if (cameraInput) {
+                cameraInput.click();
+            } else {
+                // fallback ถ้าไม่มี cameraInput
+                document.getElementById('photoInput').click();
+            }
+        }
+
+        function selectFromGallery() {
+            const galleryInput = document.getElementById('galleryInput');
+            if (galleryInput) {
+                galleryInput.click();
+            } else {
+                // fallback ถ้าไม่มี galleryInput
+                const photoInput = document.getElementById('photoInput');
+                photoInput.removeAttribute('capture'); // ลบ capture เพื่อให้เลือกจากแกลเลอรี่
+                photoInput.click();
+            }
+        }
+
+        // สำหรับใช้กับปุ่มเดิม (ถ้ามี)
+        function uploadPhoto() {
+            // แสดงตัวเลือกให้ผู้ใช้เลือก
+            if (confirm('ต้องการถ่ายภาพใหม่หรือเลือกจากแกลเลอรี่?\n\n- กด OK เพื่อถ่ายภาพ\n- กด Cancel เพื่อเลือกจากแกลเลอรี่')) {
+                openCamera();
+            } else {
+                selectFromGallery();
+            }
+        }
+
+        // ฟังก์ชันสำหรับ handle การอัพโหลดภาพ
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // ตรวจสอบว่าเป็นไฟล์ภาพ
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+                        const photoPreview = document.getElementById('photoPreview');
+                        const previewImage = document.getElementById('previewImage');
+                        
+                        if (uploadPlaceholder && photoPreview && previewImage) {
+                            uploadPlaceholder.classList.add('hidden');
+                            previewImage.src = e.target.result;
+                            photoPreview.classList.remove('hidden');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    alert('กรุณาเลือกไฟล์ภาพเท่านั้น');
+                }
+            }
+        }
+
+        // ฟังก์ชันสำหรับ Exercise Time Slider
+        function updateExerciseTime(value) {
+            const currentTime = document.getElementById('currentTime');
+            const progressBar = document.querySelector('.runner-animation');
+            const progressFill = document.querySelector('.bg-gradient-to-r.from-green-400');
+            
+            if (currentTime) {
+                currentTime.textContent = value;
+            }
+            
+            const percentage = (value / 60) * 100;
+            if (progressBar) {
+                progressBar.style.left = percentage + '%';
+            }
+            if (progressFill) {
+                progressFill.style.width = percentage + '%';
+            }
+        }
+
+        // ฟังก์ชันสำหรับ Level Popup
+        function showLevelPopup() {
+            const popup = document.getElementById('levelPopup');
+            if (popup) {
+                popup.classList.remove('hidden');
+            }
+        }
+
+        function closeLevelPopup() {
+            const popup = document.getElementById('levelPopup');
+            if (popup) {
+                popup.classList.add('hidden');
+            }
+        }
+
+        function showExpInfo() {
+            const levelPopup = document.getElementById('levelPopup');
+            const expPopup = document.getElementById('expInfoPopup');
+            
+            if (levelPopup) {
+                levelPopup.classList.add('hidden');
+            }
+            if (expPopup) {
+                expPopup.classList.remove('hidden');
+            }
+        }
+
+        function closeExpInfo() {
+            const popup = document.getElementById('expInfoPopup');
+            if (popup) {
+                popup.classList.add('hidden');
+            }
+        }
+
+        // ฟังก์ชันสำหรับ Submit Data
+        function submitData() {
+            // ตรวจสอบว่ามีการอัพโหลดภาพหรือไม่
+            const photoPreview = document.getElementById('photoPreview');
+            const exerciseTime = document.getElementById('currentTime').textContent;
+            
+            if (photoPreview && !photoPreview.classList.contains('hidden')) {
+                // มีการอัพโหลดภาพแล้ว
+                if (confirm(`ต้องการส่งข้อมูลการออกกำลังกาย ${exerciseTime} นาที เข้าระบบหรือไม่?`)) {
+                    // ส่งข้อมูลไปยัง Firebase หรือ API
+                    alert('ส่งข้อมูลสำเร็จ! คุณได้รับ 5 แต้มสุขภาพ');
+                    // รีเซ็ตฟอร์ม
+                    resetForm();
+                }
+            } else {
+                alert('กรุณาอัพโหลดภาพการออกกำลังกายก่อนส่งข้อมูล');
+            }
+        }
+
+        function resetForm() {
+            const uploadPlaceholder = document.getElementById('uploadPlaceholder');
+            const photoPreview = document.getElementById('photoPreview');
+            const slider = document.getElementById('exerciseSlider');
+            
+            if (uploadPlaceholder && photoPreview) {
+                uploadPlaceholder.classList.remove('hidden');
+                photoPreview.classList.add('hidden');
+            }
+            
+            if (slider) {
+                slider.value = 30;
+                updateExerciseTime(30);
+            }
+        }
+
+        // ฟังก์ชันสำหรับ Logout
+        function quickLogout() {
+            if (confirm('ต้องการออกจากระบบหรือไม่?')) {
+                // Logout from Firebase
+                window.location.href = 'index.html';
+            }
+        }
+
+        // เริ่มต้นการทำงานเมื่อหน้าเว็บโหลดเสร็จ
+        document.addEventListener('DOMContentLoaded', function() {
+            // กำหนดค่าเริ่มต้น
+            updateExerciseTime(30);
+        });
+    </script>
 
     <script type="module" src="script2.js"></script>
 </body>

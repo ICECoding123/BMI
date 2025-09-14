@@ -419,9 +419,10 @@ async function submitForm() {
             organization: document.getElementById('organization').value.trim(),
             photo: photoData,
             bmi: bmi,
-            healthPoints: 0,
+            healthPoints: 10,
             level: 0,
-            experiencePoints: 0,
+            exp: 10,
+            experiencePoints: 10,
             consecutiveDays: 0,
             timestamp: new Date()
         };

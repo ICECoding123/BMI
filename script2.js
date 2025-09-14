@@ -82,7 +82,7 @@ function getDisplayName(userData = null) {
     // 2. userData.name (full name from profile)
     // 3. userData.displayName 
     // 4. Firebase Auth displayName
-    // 5. Firebase Auth email (แค่ส่วนหน้า @ ถ้ามี)
+    // 5. Firebase Auth email (เเค่ส่วนหน้า @ ถ้ามี)
     // 6. Default fallback
     
     // Check for separate first and last name fields
@@ -148,11 +148,11 @@ async function loadUserData() {
             updateUserDataDisplay(userData);
         } else {
             console.log('No user data found, using defaults');
-            // Set default values with proper name priority
+            // Set default values - เริ่มต้นที่ 0
             const defaultData = {
-                healthPoints: 150,
-                consecutiveDays: 5,
-                exp: 10,
+                healthPoints: 0,        // เปลี่ยนจาก 150 เป็น 0
+                consecutiveDays: 0,     // เปลี่ยนจาก 5 เป็น 0
+                exp: 0,                 // เปลี่ยนจาก 10 เป็น 0
                 level: 0,
                 firstName: getFirstName(),
                 lastName: getLastName()
@@ -161,11 +161,11 @@ async function loadUserData() {
         }
     } catch (error) {
         console.error('Error loading user data:', error);
-        // Use defaults if error
+        // Use defaults if error - เริ่มต้นที่ 0
         const defaultData = {
-            healthPoints: 150,
-            consecutiveDays: 5,
-            exp: 10,
+            healthPoints: 0,        // เปลี่ยนจาก 150 เป็น 0
+            consecutiveDays: 0,     // เปลี่ยนจาก 5 เป็น 0
+            exp: 0,                 // เปลี่ยนจาก 10 เป็น 0
             level: 0,
             firstName: getFirstName(),
             lastName: getLastName()
@@ -176,7 +176,7 @@ async function loadUserData() {
 
 // Update UI with user data
 function updateUserDataDisplay(userData) {
-    const totalExp = userData.exp || 10;
+    const totalExp = userData.exp || 0;        // เปลี่ยนจาก 10 เป็น 0
     const level = calculateLevel(totalExp);
     const currentLevelExp = getExpInCurrentLevel(totalExp);
     const expNeeded = getExpNeededForNextLevel(totalExp);
@@ -194,15 +194,15 @@ function updateUserDataDisplay(userData) {
     }
     
     if (document.getElementById('healthPoints')) {
-        document.getElementById('healthPoints').textContent = userData.healthPoints || 150;
+        document.getElementById('healthPoints').textContent = userData.healthPoints || 0;    // เปลี่ยนจาก 150 เป็น 0
     }
     
     if (document.getElementById('totalPoints')) {
-        document.getElementById('totalPoints').textContent = userData.healthPoints || 150;
+        document.getElementById('totalPoints').textContent = userData.healthPoints || 0;    // เปลี่ยนจาก 150 เป็น 0
     }
     
     if (document.getElementById('consecutiveDays')) {
-        document.getElementById('consecutiveDays').textContent = userData.consecutiveDays || 5;
+        document.getElementById('consecutiveDays').textContent = userData.consecutiveDays || 0;  // เปลี่ยนจาก 5 เป็น 0
     }
     
     // Update popup displays
@@ -480,10 +480,10 @@ async function submitData() {
         
         // Get current user data
         const userData = await getUserData();
-        const currentExp = userData?.exp || 10;
+        const currentExp = userData?.exp || 0;          // เปลี่ยนจาก 10 เป็น 0
         const currentLevel = calculateLevel(currentExp);
-        const currentPoints = userData?.healthPoints || parseInt(document.getElementById('totalPoints').textContent) || 150;
-        const currentDays = userData?.consecutiveDays || parseInt(document.getElementById('consecutiveDays').textContent) || 5;
+        const currentPoints = userData?.healthPoints || parseInt(document.getElementById('totalPoints').textContent) || 0;  // เปลี่ยนจาก fallback 0
+        const currentDays = userData?.consecutiveDays || parseInt(document.getElementById('consecutiveDays').textContent) || 0;  // เปลี่ยนจาก fallback 0
         
         // Calculate new values
         const expGain = 5; // EXP ที่ได้รับจากการส่งข้อมูล
@@ -932,7 +932,7 @@ window.quickLogout = quickLogout;
 
 // Debug function for testing
 window.debugSheetBest = async function() {
-    console.log('=== Debug Sheet.best Connection (with First Name & Last Name System) ===');
+    console.log('=== Debug Sheet.best Connection (with Health Points & Consecutive Days starting at 0) ===');
     console.log('URL:', SHEET_BEST_URL);
     console.log('Online:', navigator.onLine);
     console.log('EXP Thresholds:', LEVEL_THRESHOLDS);
@@ -943,7 +943,7 @@ window.debugSheetBest = async function() {
     }
     
     // Test the new EXP system
-    console.log('=== Testing Progressive EXP System ===');
+    console.log('=== Testing Progressive EXP System (Starting from 0) ===');
     const testExpValues = [0, 20, 40, 50, 100, 150, 180, 250, 320, 400, 500, 600];
     
     testExpValues.forEach(exp => {
@@ -976,7 +976,7 @@ window.debugSheetBest = async function() {
     ctx.fillRect(0, 0, 1, 1);
     const testImageBase64 = canvas.toDataURL('image/png');
     
-    console.log('✅ Testing data send with First Name & Last Name system...');
+    console.log('✅ Testing data send with Health Points & Consecutive Days starting at 0...');
     try {
         const testData = {
             timestamp: new Date().toISOString(),
@@ -986,21 +986,21 @@ window.debugSheetBest = async function() {
             lastName: currentLastName + ' (ระบบ)',
             fullName: currentDisplayName + ' (ทดสอบระบบ)',
             exerciseTime: 30,
-            healthPoints: 100,
-            consecutiveDays: 1,
-            level: 2,
-            exp: 150,
+            healthPoints: 5,       // เริ่มต้นจาก 0 + 5 = 5 points
+            consecutiveDays: 1,    // เริ่มต้นจาก 0 + 1 = 1 day
+            level: 0,              // ยังคงเลเวล 0 (ต้อง 40 EXP ถึงจะเลเวล 1)
+            exp: 5,                // เริ่มต้นจาก 0 + 5 = 5 EXP
             hasPhoto: 'Yes',
             image: testImageBase64,
-            imageFilename: 'test-firstname-lastname.png',
+            imageFilename: 'test-zero-start.png',
             imageSize: testImageBase64.length,
             imageType: 'image/png',
-            submissionStatus: 'Test First Name & Last Name System',
-            notes: `Testing First Name & Last Name system - ${currentFirstName} ${currentLastName} - Level 2 (150 EXP)`
+            submissionStatus: 'Test Starting from Zero',
+            notes: `Testing Zero Start System - ${currentFirstName} ${currentLastName} - Start: 0 HP, 0 Days, 0 EXP → After first submission: 5 HP, 1 Day, 5 EXP`
         };
         const result = await sendToSheetBest(testData);
-        console.log('✅ Test send with First Name & Last Name successful:', result);
-        alert(`การทดสอบ First Name & Last Name System สำเร็จ!\nFirst Name: ${currentFirstName}\nLast Name: ${currentLastName}\nFull Name: ${currentDisplayName}\nตรวจสอบ Google Sheet ของคุณ`);
+        console.log('✅ Test send with Zero Start System successful:', result);
+        alert(`การทดสอบ Zero Start System สำเร็จ!\nเริ่มต้น: 0 HP, 0 วัน, 0 EXP\nหลังส่งครั้งแรก: 5 HP, 1 วัน, 5 EXP\nตรวจสอบ Google Sheet ของคุณ`);
     } catch (error) {
         console.log('❌ Test send failed:', error);
         alert(`การทดสอบล้มเหลว: ${error.message}`);

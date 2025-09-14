@@ -179,10 +179,6 @@ window.takePhoto = function() {
 window.handlePhotoSelect = function(event) {
     const file = event.target.files[0];
     if (file) {
-        if (file.size > 10 * 2048 * 2048) {
-            showNotification('ไฟล์รูปภาพใหญ่เกินไป', 'error', 'กรุณาเลือกไฟล์ขนาดไม่เกิน 5MB');
-            return;
-        }
         const reader = new FileReader();
         reader.onload = function(e) {
             photoData = e.target.result;

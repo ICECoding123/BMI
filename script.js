@@ -418,7 +418,6 @@ async function submitForm() {
             department: document.getElementById('department').value.trim(),
             organization: document.getElementById('organization').value.trim(),
             photo: photoData,
-            exp : 10,
             bmi: bmi,
             healthPoints: 0,
             level: 0,

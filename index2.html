@@ -44,9 +44,9 @@
         <div class="glass-effect rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 hover-lift border border-white/20">
             <div class="flex flex-col items-center justify-center space-y-4 sm:space-y-6 lg:flex-row lg:space-y-0 lg:space-x-8 xl:space-x-12">
                 <!-- Logo -->
-                <div class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 flex-shrink-0">
-                    <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
-                </div>
+                <div class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 xl:w-36 xl:h-36 flex-shrink-0">
+    <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
+</div>
                 
                 <!-- Profile Photo -->
                  <div class="relative flex-shrink-0">
@@ -87,29 +87,30 @@
             </div>
             
             <!-- Level Badge -->
-            <div class="level-badge rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
-                <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-                    <div class="flex items-center space-x-3 sm:space-x-4">
-                        <div onclick="showLevelPopup()" class="cursor-pointer transform hover:scale-110 transition-all duration-300">
-                            <div id="levelProfileContainer" class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-200 to-orange-400 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white">
-                                <span class="text-2xl sm:text-4xl">🐰</span>
-                            </div>
-                        </div>
-                        <div class="text-center sm:text-left">
-                            <p class="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2">เลเวล <span id="userLevel">0</span></p>
-                            <div id="levelStarsMain" class="flex justify-center sm:justify-start space-x-1">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm text-center">
-                        <p class="text-xs sm:text-sm font-medium mb-1">BMI ล่าสุด</p>
-                        <div class="bmi-indicator">
-                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold" id="bmiResult">-</p>
-                            <p class="text-xs opacity-90" id="bmiStatus">รอการคำนวด</p>
-                        </div>
-                    </div>
+            
+<div class="level-badge rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
+    <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+        <div class="flex items-center space-x-3 sm:space-x-4">
+            <div onclick="showLevelPopup()" class="cursor-pointer transform hover:scale-110 transition-all duration-300">
+                <div id="levelProfileContainer" class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 bg-gradient-to-br from-orange-200 to-orange-400 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white">
+                    <span class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl">🐰</span>
                 </div>
             </div>
+            <div class="text-center sm:text-left">
+                <p class="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2">เลเวล <span id="userLevel">0</span></p>
+                <div id="levelStarsMain" class="flex justify-center sm:justify-start space-x-1">
+                </div>
+            </div>
+        </div>
+        <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm text-center">
+            <p class="text-xs sm:text-sm font-medium mb-1">BMI ล่าสุด</p>
+            <div class="bmi-indicator">
+                <p class="text-xl sm:text-2xl lg:text-3xl font-bold" id="bmiResult">-</p>
+                <p class="text-xs opacity-90" id="bmiStatus">รอการคำนวด</p>
+            </div>
+        </div>
+    </div>
+</div>
 
             <!-- Exercise Card -->
             <div class="exercise-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
@@ -237,7 +238,7 @@
         <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md w-full shadow-2xl">
             <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">รายละเอียดเงื่อนไข</h2>
             
-            <div class="bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
+           <div class="bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
     <table class="w-full text-xs sm:text-sm text-white">
         <thead>
             <tr class="border-b border-green-200">

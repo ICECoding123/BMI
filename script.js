@@ -176,24 +176,67 @@ window.takePhoto = function() {
     document.getElementById('photoInput').click();
 }
 
-window.handlePhotoSelect = function(event) {
+window.handlePhotoSelect = async function(event) {
     const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            photoData = e.target.result;
-            const preview = document.getElementById('photoPreview');
-            const placeholder = document.getElementById('cameraPlaceholder');
-            const overlay = document.getElementById('photoOverlay');
+    if (!file) return;
+    
+    // Check if file is an image
+    if (!file.type.startsWith('image/')) {
+        showNotification('กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'error');
+        return;
+    }
+    
+    // Check original file size (limit to 10MB)
+    const maxFileSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxFileSize) {
+        showNotification('ไฟล์รูปภาพมีขนาดใหญ่เกินไป (สูงสุด 10MB)', 'error');
+        return;
+    }
+    
+    // Show loading state
+    showLoading(true);
+    showNotification('กำลังประมวลผลรูปภาพ...', 'info');
+    
+    try {
+        // First compression attempt with standard settings
+        let compressedDataUrl = await compressImage(file, 800, 600, 0.8);
+        let fileSizeKB = getFileSizeKB(compressedDataUrl);
+        
+        // If still too large, apply more aggressive compression
+        if (fileSizeKB > 500) { // 500KB threshold
+            compressedDataUrl = await compressImage(file, 600, 450, 0.6);
+            fileSizeKB = getFileSizeKB(compressedDataUrl);
             
-            preview.src = photoData;
-            preview.classList.remove('hidden');
-            placeholder.classList.add('hidden');
-            overlay.classList.remove('hidden');
-            
-            updateProgress();
-        };
-        reader.readAsDataURL(file);
+            // Final compression attempt if still too large
+            if (fileSizeKB > 300) { // 300KB threshold
+                compressedDataUrl = await compressImage(file, 400, 300, 0.5);
+                fileSizeKB = getFileSizeKB(compressedDataUrl);
+            }
+        }
+        
+        // Set compressed image data
+        photoData = compressedDataUrl;
+        
+        // Update UI
+        const preview = document.getElementById('photoPreview');
+        const placeholder = document.getElementById('cameraPlaceholder');
+        const overlay = document.getElementById('photoOverlay');
+        
+        preview.src = photoData;
+        preview.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        overlay.classList.remove('hidden');
+        
+        // Hide loading and show success
+        showLoading(false);
+        showNotification(`รูปภาพถูกประมวลผลแล้ว (ขนาด: ${fileSizeKB} KB)`, 'success');
+        
+        updateProgress();
+        
+    } catch (error) {
+        console.error('Error compressing image:', error);
+        showLoading(false);
+        showNotification('เกิดข้อผิดพลาดในการประมวลผลรูปภาพ', 'error');
     }
 }
 
@@ -860,4 +903,51 @@ async function saveUserData(dataToUpdate) {
         console.error("Error updating user data:", error);
         showNotification('เกิดข้อผิดพลาดในการบันทึกข้อมูล', 'error');
     }
+}
+function compressImage(file, maxWidth = 800, maxHeight = 600, quality = 0.8) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calculate new dimensions while maintaining aspect ratio
+            let { width, height } = img;
+            
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+            }
+            
+            // Set canvas dimensions
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress image
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Convert to blob with compression
+            canvas.toBlob((blob) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsDataURL(blob);
+            }, 'image/jpeg', quality);
+        };
+        
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+// Function to get file size in KB
+function getFileSizeKB(dataUrl) {
+    const base64 = dataUrl.split(',')[1];
+    const bytes = (base64.length * 3) / 4;
+    return Math.round(bytes / 1024);
 }

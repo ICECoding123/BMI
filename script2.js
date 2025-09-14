@@ -75,6 +75,59 @@ function isMaxLevel(level) {
     return level >= 5;
 }
 
+// Function to get display name with proper priority
+function getDisplayName(userData = null) {
+    // Priority order for display name:
+    // 1. userData.firstName + userData.lastName (separate fields)
+    // 2. userData.name (full name from profile)
+    // 3. userData.displayName 
+    // 4. Firebase Auth displayName
+    // 5. Firebase Auth email (แค่ส่วนหน้า @ ถ้ามี)
+    // 6. Default fallback
+    
+    // Check for separate first and last name fields
+    if (userData?.firstName && userData?.lastName) {
+        return `${userData.firstName} ${userData.lastName}`;
+    }
+    
+    // Check for combined name field
+    if (userData?.name) return userData.name;
+    if (userData?.displayName) return userData.displayName;
+    
+    // Check Firebase Auth user info
+    if (auth.currentUser?.displayName) return auth.currentUser.displayName;
+    
+    // Use email username part if available
+    if (auth.currentUser?.email) {
+        const emailUsername = auth.currentUser.email.split('@')[0];
+        if (emailUsername && emailUsername.length > 0) {
+            return emailUsername;
+        }
+    }
+    
+    return 'สมชาย ใจดี'; // Default fallback
+}
+
+// Function to get first name only
+function getFirstName(userData = null) {
+    if (userData?.firstName) return userData.firstName;
+    
+    // Try to extract first name from full name
+    const fullName = getDisplayName(userData);
+    const nameParts = fullName.split(' ');
+    return nameParts[0] || 'สมชาย';
+}
+
+// Function to get last name only
+function getLastName(userData = null) {
+    if (userData?.lastName) return userData.lastName;
+    
+    // Try to extract last name from full name
+    const fullName = getDisplayName(userData);
+    const nameParts = fullName.split(' ');
+    return nameParts.length > 1 ? nameParts.slice(1).join(' ') : 'ใจดี';
+}
+
 // Load and display user data when page loads
 async function loadUserData() {
     if (!auth.currentUser || !db) {
@@ -95,13 +148,14 @@ async function loadUserData() {
             updateUserDataDisplay(userData);
         } else {
             console.log('No user data found, using defaults');
-            // Set default values
+            // Set default values with proper name priority
             const defaultData = {
                 healthPoints: 150,
                 consecutiveDays: 5,
                 exp: 10,
                 level: 0,
-                name: 'สมชาย ใจดี'
+                firstName: getFirstName(),
+                lastName: getLastName()
             };
             updateUserDataDisplay(defaultData);
         }
@@ -113,7 +167,8 @@ async function loadUserData() {
             consecutiveDays: 5,
             exp: 10,
             level: 0,
-            name: 'สมชาย ใจดี'
+            firstName: getFirstName(),
+            lastName: getLastName()
         };
         updateUserDataDisplay(defaultData);
     }
@@ -125,11 +180,13 @@ function updateUserDataDisplay(userData) {
     const level = calculateLevel(totalExp);
     const currentLevelExp = getExpInCurrentLevel(totalExp);
     const expNeeded = getExpNeededForNextLevel(totalExp);
-    const totalPoints = userData.healthPoints || 150;
+    
+    // Get proper display name from first and last name
+    const displayName = getDisplayName(userData);
     
     // Update main display
     if (document.getElementById('userName')) {
-        document.getElementById('userName').textContent = userData.name || 'สมชาย ใจดี';
+        document.getElementById('userName').textContent = displayName;
     }
     
     if (document.getElementById('userLevel')) {
@@ -137,16 +194,11 @@ function updateUserDataDisplay(userData) {
     }
     
     if (document.getElementById('healthPoints')) {
-        document.getElementById('healthPoints').textContent = totalPoints;
+        document.getElementById('healthPoints').textContent = userData.healthPoints || 150;
     }
     
     if (document.getElementById('totalPoints')) {
-        document.getElementById('totalPoints').textContent = totalPoints;
-    }
-    
-    // Update popup total points
-    if (document.getElementById('popupTotalPoints')) {
-        document.getElementById('popupTotalPoints').textContent = totalPoints;
+        document.getElementById('totalPoints').textContent = userData.healthPoints || 150;
     }
     
     if (document.getElementById('consecutiveDays')) {
@@ -162,7 +214,7 @@ function updateUserDataDisplay(userData) {
         renderLevelStars('levelStarsPopup', level);
     }
     
-    console.log(`User data updated - Total EXP: ${totalExp}, Level: ${level}, Total Points: ${totalPoints}`);
+    console.log(`User data updated - Name: ${displayName}, Total EXP: ${totalExp}, Level: ${level}, Current Level EXP: ${currentLevelExp}`);
 }
 
 // Update EXP display in popup
@@ -328,11 +380,6 @@ async function checkDailySubmissionLimit() {
 function showLevelPopup() {
     // Update popup data before showing
     loadUserData().then(() => {
-        // Make sure total points is updated in popup
-        const totalPoints = parseInt(document.getElementById('totalPoints').textContent) || 150;
-        if (document.getElementById('popupTotalPoints')) {
-            document.getElementById('popupTotalPoints').textContent = totalPoints;
-        }
         document.getElementById('levelPopup').classList.remove('hidden');
     });
 }
@@ -448,13 +495,17 @@ async function submitData() {
         const newLevel = calculateLevel(newExp);
 
         const exerciseTime = parseInt(document.getElementById('currentTime').textContent) || 30;
-        const username = userData?.name || userData?.displayName || auth.currentUser.email || 'ไม่ระบุ';
+        const displayName = getDisplayName(userData);
+        const firstName = getFirstName(userData);
+        const lastName = getLastName(userData);
         
         // Prepare data
         const today = new Date().toISOString().split('T')[0];
         const now = new Date();
         
         const dataToUpdate = {
+            firstName: firstName, // บันทึก first name แยก
+            lastName: lastName,   // บันทึก last name แยก
             healthPoints: newPoints,
             consecutiveDays: newDays,
             level: newLevel,
@@ -476,7 +527,9 @@ async function submitData() {
             timestamp: now.toISOString(),
             date: today,
             time: now.toLocaleTimeString('th-TH'),
-            username: username,
+            firstName: firstName,
+            lastName: lastName,
+            fullName: displayName,
             exerciseTime: exerciseTime,
             healthPoints: newPoints,
             consecutiveDays: newDays,
@@ -488,10 +541,10 @@ async function submitData() {
             imageSize: currentPhotoData.size,
             imageType: currentPhotoData.type,
             submissionStatus: 'Success',
-            notes: `Exercise: ${exerciseTime} minutes, Level: ${newLevel}, EXP: ${newExp}, Photo: ${currentPhotoData.filename}`
+            notes: `Exercise: ${exerciseTime} minutes, Level: ${newLevel}, EXP: ${newExp}, Photo: ${currentPhotoData.filename}, Name: ${firstName} ${lastName}`
         };
 
-        console.log('Data prepared:', { dataToUpdate, newExp, newLevel, currentLevel });
+        console.log('Data prepared:', { dataToUpdate, newExp, newLevel, currentLevel, firstName, lastName, displayName });
 
         // Step 1: Save to Firestore
         if (submitButton) {
@@ -835,6 +888,20 @@ async function checkSubmissionStatus() {
     }
 }
 
+// Logout function
+async function quickLogout() {
+    try {
+        if (auth && auth.currentUser) {
+            await auth.signOut();
+            console.log('User signed out successfully');
+            window.location.href = 'index.html';
+        }
+    } catch (error) {
+        console.error('Error signing out:', error);
+        alert('เกิดข้อผิดพลาดในการออกจากระบบ');
+    }
+}
+
 // Initialize when auth state changes
 window.addEventListener('load', () => {
     // Wait a bit for Firebase auth to be ready
@@ -861,10 +928,11 @@ window.checkDailySubmissionLimit = checkDailySubmissionLimit;
 window.removePhoto = removePhoto;
 window.loadUserData = loadUserData;
 window.renderLevelStars = renderLevelStars;
+window.quickLogout = quickLogout;
 
 // Debug function for testing
 window.debugSheetBest = async function() {
-    console.log('=== Debug Sheet.best Connection (with Progressive EXP System) ===');
+    console.log('=== Debug Sheet.best Connection (with First Name & Last Name System) ===');
     console.log('URL:', SHEET_BEST_URL);
     console.log('Online:', navigator.onLine);
     console.log('EXP Thresholds:', LEVEL_THRESHOLDS);
@@ -888,6 +956,17 @@ window.debugSheetBest = async function() {
         console.log(`EXP ${exp}: Level ${level}, Current Level EXP: ${levelExp}/${maxExp}, Need: ${expNeeded}, Max: ${isMax}`);
     });
     
+    // Get current user info for debugging
+    const userData = await getUserData();
+    const currentDisplayName = getDisplayName(userData);
+    const currentFirstName = getFirstName(userData);
+    const currentLastName = getLastName(userData);
+    console.log('Current Display Name:', currentDisplayName);
+    console.log('Current First Name:', currentFirstName);
+    console.log('Current Last Name:', currentLastName);
+    console.log('Auth User:', auth.currentUser?.email, auth.currentUser?.displayName);
+    console.log('User Data:', userData);
+    
     // Create a small test image
     const canvas = document.createElement('canvas');
     canvas.width = 1;
@@ -897,29 +976,31 @@ window.debugSheetBest = async function() {
     ctx.fillRect(0, 0, 1, 1);
     const testImageBase64 = canvas.toDataURL('image/png');
     
-    console.log('✅ Testing data send with progressive EXP system...');
+    console.log('✅ Testing data send with First Name & Last Name system...');
     try {
         const testData = {
             timestamp: new Date().toISOString(),
             date: new Date().toISOString().split('T')[0],
             time: new Date().toLocaleTimeString('th-TH'),
-            username: 'ทดสอบระบบ Progressive EXP',
+            firstName: currentFirstName + ' (ทดสอบ)',
+            lastName: currentLastName + ' (ระบบ)',
+            fullName: currentDisplayName + ' (ทดสอบระบบ)',
             exerciseTime: 30,
             healthPoints: 100,
             consecutiveDays: 1,
             level: 2,
-            exp: 150, // Test with Level 2 exp
+            exp: 150,
             hasPhoto: 'Yes',
             image: testImageBase64,
-            imageFilename: 'test-progressive-exp.png',
+            imageFilename: 'test-firstname-lastname.png',
             imageSize: testImageBase64.length,
             imageType: 'image/png',
-            submissionStatus: 'Test Progressive EXP',
-            notes: 'Testing progressive EXP system: Level 2 (150 EXP)'
+            submissionStatus: 'Test First Name & Last Name System',
+            notes: `Testing First Name & Last Name system - ${currentFirstName} ${currentLastName} - Level 2 (150 EXP)`
         };
         const result = await sendToSheetBest(testData);
-        console.log('✅ Test send with progressive EXP successful:', result);
-        alert('การทดสอบ Progressive EXP System สำเร็จ! (รวมรูปภาพและ EXP ระบบใหม่) ตรวจสอบ Google Sheet ของคุณ');
+        console.log('✅ Test send with First Name & Last Name successful:', result);
+        alert(`การทดสอบ First Name & Last Name System สำเร็จ!\nFirst Name: ${currentFirstName}\nLast Name: ${currentLastName}\nFull Name: ${currentDisplayName}\nตรวจสอบ Google Sheet ของคุณ`);
     } catch (error) {
         console.log('❌ Test send failed:', error);
         alert(`การทดสอบล้มเหลว: ${error.message}`);

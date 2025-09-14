@@ -197,52 +197,74 @@
     </div>
 
     <div id="levelPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        <div class="text-center mb-6">
-            <div class="w-20 h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="text-4xl">🏰</span>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">เลเวล <span id="level">0</span></h2>
-            <div id="levelStarsPopup" class="flex justify-center space-x-1 mb-4">
-            </div>
-        </div>
-        
-        <!-- Total Points Section -->
-        <div class="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-2xl p-4 mb-4 border border-yellow-200">
-            <div class="flex items-center justify-center space-x-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center">
-                    <span class="text-white text-lg font-bold">💰</span>
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-4xl">🐰</span>
                 </div>
-                <div class="text-center">
-                    <p class="text-sm text-gray-600 font-medium mb-1">แต้มสุขภาพรวม</p>
-                    <p class="text-2xl font-bold text-yellow-700" id="popupTotalPoints">150</p>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">เลเวล <span id="level">0</span></h2>
+                <div id="levelStarsPopup" class="flex justify-center space-x-1 mb-4">
                 </div>
             </div>
-        </div>
-        
-        <!-- EXP Section -->
-        <div class="mb-6">
-            <div class="flex justify-between text-sm text-gray-600 mb-2">
-                <span>EXP</span>
-                <span><span id="currentExp">10</span>/<span id="nextLevelExp">50</span></span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-4 relative">
-                <div id="progressBar" class="progress-bar h-4 rounded-full" style="width: 20%"></div>
-            </div>
-            <p id="expToNext" class="text-xs text-gray-500 mt-1 text-center">อีก 40 EXP เพื่อเลเวล 1</p>
-        </div>
-        
-        <button onclick="showExpInfo()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full mb-4 transition duration-300">
-            EXP ได้รับอย่างไร
-        </button>
-        
-        <button onclick="closeLevelPopup()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-6 rounded-full transition duration-300">
-            ปิด
-        </button>
+            
+            <div class="mb-6">
+    <div class="flex justify-between text-sm text-gray-600 mb-2">
+        <span>EXP</span>
+        <span><span id="currentExp">10</span>/<span id="nextLevelExp">50</span></span>
     </div>
-    <div class="text-center">
-                    <button onclick="quickLogout()"  class="logout-btn">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div class="w-full bg-gray-200 rounded-full h-4 relative">
+        <div id="progressBar" class="progress-bar h-4 rounded-full" style="width: 20%"></div>
+    </div>
+    <p id="expToNext" class="text-xs text-gray-500 mt-1 text-center">อีก 40 EXP เพื่อเลเวล 1</p>
+</div>
+
+            
+            <button onclick="showExpInfo()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full mb-4 transition duration-300">
+                EXP ได้รับอย่างไร
+            </button>
+            
+            <button onclick="closeLevelPopup()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-6 rounded-full transition duration-300">
+                ปิด
+            </button>
+        </div>
+    </div>
+
+    <div id="expInfoPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">รายละเอียดเงื่อนไข</h2>
+            
+            <div class="bg-green-50 rounded-2xl p-4 mb-6">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-green-200">
+                            <th class="text-left py-2 font-semibold">เงื่อนไข</th>
+                            <th class="text-center py-2 font-semibold">แต้มสุขภาพ</th>
+                            <th class="text-center py-2 font-semibold">EXP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-green-100">
+                            <td class="py-2">ลงทะเบียนใหม่</td>
+                            <td class="text-center py-2">10 แต้ม</td>
+                            <td class="text-center py-2">10 EXP</td>
+                        </tr>
+                        <tr>
+                            <td class="py-2">ส่งข้อมูลขยับเข้าระบบ</td>
+                            <td class="text-center py-2">5 แต้ม</td>
+                            <td class="text-center py-2">5 EXP</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <button onclick="closeExpInfo()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition duration-300">
+                เข้าใจแล้ว
+            </button>
+        </div>
+    </div>
+    <div class="text-center mt-8">
+                    <button onclick="quickLogout()" class="logout-btn">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                         </svg>
                         <span>ออกจากระบบ</span>

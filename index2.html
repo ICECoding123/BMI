@@ -27,10 +27,8 @@
         
         onAuthStateChanged(auth, (user) => {
             if (!user) {
-                // ถ้าไม่มีผู้ใช้ล็อกอินอยู่ ให้เปลี่ยนเส้นทางไปหน้าแรกทันที
                 window.location.href = 'index.html';
             } else {
-                // ถ้ามีผู้ใช้ล็อกอินอยู่ ให้แสดงเนื้อหาทั้งหมด
                 document.body.style.display = 'block';
             }
         });
@@ -40,201 +38,207 @@
     <script type="module" src="script.js"></script>
 </head>
 <body style="display:none;" class="bg-gradient-to-br from-green-50 to-green-100 min-h-screen">
-    <div id="mainContent" class="">
+    <div id="mainContent" class="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 max-w-6xl">
         
-        <div class="glass-effect rounded-3xl shadow-2xl p-8 mb-8 hover-lift border border-white/20">
-    <div class="flex flex-col items-center justify-center space-y-6 md:flex-row md:space-y-0 md:space-x-12">
-        <div class="w-32 h-32 flex-shrink-0">
-            <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
-        </div>
-        <div class="relative flex-shrink-0">
-            <div id="profilePhotoContainer" class="w-32 h-32 bg-gradient-to-br from-green-200 via-green-300 to-green-400 rounded-full flex items-center justify-center shadow-xl border-4 border-white transition-transform transform hover:scale-110">
-                <img id="profilePhoto" class="w-full h-full object-cover rounded-full hidden" alt="รูปโปรไฟล์ผู้ใช้">
-                <svg id="profileSvg" class="w-16 h-16 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-            </div>
-            <div class="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-white pulse-green">
-                <span class="text-white text-xs">✔</span>
-            </div>
-        </div>
-        <div class="text-center md:text-left flex-shrink-0">
-            <div class="flex items-center justify-center md:justify-start space-x-3 mb-2">
-                <div class="coin-icon w-12 h-12 rounded-full flex items-center justify-center">
-                    <span class="text-white text-lg font-bold">💰</span>
+        <!-- Profile Header Card -->
+        <div class="glass-effect rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 hover-lift border border-white/20">
+            <div class="flex flex-col items-center justify-center space-y-4 sm:space-y-6 lg:flex-row lg:space-y-0 lg:space-x-8 xl:space-x-12">
+                <!-- Logo -->
+                <div class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 flex-shrink-0">
+                    <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
                 </div>
-                <div>
-                    <span class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-yellow-800 bg-clip-text text-transparent" id="healthPoints">150</span>
-                    <p class="text-sm text-gray-600 font-medium">แต้มสุขภาพ</p>
+                
+                <!-- Profile Photo -->
+                <div class="relative flex-shrink-0">
+                    <div id="profilePhotoContainer" class="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 xl:w-32 xl:h-32 bg-gradient-to-br from-green-200 via-green-300 to-green-400 rounded-full flex items-center justify-center shadow-lg sm:shadow-xl border-2 sm:border-4 border-white transition-transform transform hover:scale-110">
+                        <img id="profilePhoto" class="w-full h-full object-cover rounded-full hidden" alt="รูปโปรไฟล์ผู้ใช้">
+                        <svg id="profileSvg" class="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 lg:w-12 lg:h-12 xl:w-16 xl:h-16 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="absolute -bottom-0.5 -right-0.5 sm:-bottom-1 sm:-right-1 w-4 h-4 sm:w-6 sm:h-6 lg:w-8 lg:h-8 bg-green-500 rounded-full flex items-center justify-center border-2 border-white pulse-green">
+                        <span class="text-white text-xs sm:text-sm">✓</span>
+                    </div>
+                </div>
+                
+                <!-- Health Points -->
+                <div class="text-center lg:text-left flex-shrink-0">
+                    <div class="flex items-center justify-center lg:justify-start space-x-2 sm:space-x-3 mb-2">
+                        <div class="coin-icon w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm sm:text-base lg:text-lg font-bold">💰</span>
+                        </div>
+                        <div>
+                            <span class="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-yellow-600 to-yellow-800 bg-clip-text text-transparent" id="healthPoints">150</span>
+                            <p class="text-xs sm:text-sm text-gray-600 font-medium">แต้มสุขภาพ</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
-    </div>
         </div>
 
-        <div class="glass-effect rounded-3xl shadow-2xl p-8 mb-8 hover-lift border border-white/20">
-            <div class="text-center mb-6">
-                <h1 id="userName" class="text-4xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">สมชาย ใจดี</h1>
-                <div class="bg-green-100 rounded-full px-4 py-1 inline-block">
-                    <span class="text-green-700 font-medium text-sm">สมาชิกโครงการ ขยับแลกแต้ม</span>
+        <!-- Main Content Card -->
+        <div class="glass-effect rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl p-4 sm:p-6 lg:p-8 mb-4 sm:mb-6 lg:mb-8 hover-lift border border-white/20">
+            <!-- User Name Section -->
+            <div class="text-center mb-4 sm:mb-6">
+                <h1 id="userName" class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">สมชาย ใจดี</h1>
+                <div class="bg-green-100 rounded-full px-3 sm:px-4 py-1 inline-block">
+                    <span class="text-green-700 font-medium text-xs sm:text-sm">สมาชิกโครงการ ขยับแลกแต้ม</span>
                 </div>
             </div>
             
-            <div class="level-badge rounded-3xl p-6 mb-6 text-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-4">
+            <!-- Level Badge -->
+            <div class="level-badge rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
+                <div class="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+                    <div class="flex items-center space-x-3 sm:space-x-4">
                         <div onclick="showLevelPopup()" class="cursor-pointer transform hover:scale-110 transition-all duration-300">
-    <div id="levelProfileContainer" class="w-20 h-20 bg-gradient-to-br from-orange-200 to-orange-400 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
-        <span class="text-4xl">🐰</span>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-        </svg>
-    </div>
-</div>
-                        <div>
-                            <p class="text-2xl font-bold mb-2">เลเวล <span id="userLevel">0</span></p>
-                            <div id="levelStarsMain" class="flex space-x-1">
+                            <div id="levelProfileContainer" class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-200 to-orange-400 rounded-full flex items-center justify-center shadow-lg border-2 sm:border-4 border-white">
+                                <span class="text-2xl sm:text-4xl">🏰</span>
+                            </div>
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <p class="text-lg sm:text-xl lg:text-2xl font-bold mb-1 sm:mb-2">เลเวล <span id="userLevel">0</span></p>
+                            <div id="levelStarsMain" class="flex justify-center sm:justify-start space-x-1">
                             </div>
                         </div>
                     </div>
-                    <div class="text-right bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-                        <p class="text-sm font-medium mb-1">BMI ล่าสุด</p>
+                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm text-center">
+                        <p class="text-xs sm:text-sm font-medium mb-1">BMI ล่าสุด</p>
                         <div class="bmi-indicator">
-                            <p class="text-3xl font-bold" id="bmiResult">-</p>
-                            <p class="text-xs opacity-90" id="bmiStatus">รอการคำนวณ</p>
+                            <p class="text-xl sm:text-2xl lg:text-3xl font-bold" id="bmiResult">-</p>
+                            <p class="text-xs opacity-90" id="bmiStatus">รอการคำนวด</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="exercise-card rounded-3xl p-6 mb-6 text-white">
-                <div class="flex items-center mb-4">
-                    <span class="text-3xl mr-3">🏃‍♂️</span>
-                    <h3 class="text-2xl font-bold">ผลการออกกำลังกายประจำวัน</h3>
+            <!-- Exercise Card -->
+            <div class="exercise-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
+                <div class="flex items-center mb-3 sm:mb-4">
+                    <span class="text-2xl sm:text-3xl mr-3">🏃‍♂️</span>
+                    <h3 class="text-lg sm:text-xl lg:text-2xl font-bold">ผลการออกกำลังกายประจำวัน</h3>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-                        <p class="text-sm font-medium mb-1">สถานะ</p>
-                        <p class="text-lg font-bold" id="exerciseStatus">คุณยังไม่ออกกำลังกาย</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
+                        <p class="text-xs sm:text-sm font-medium mb-1">สถานะ</p>
+                        <p class="text-sm sm:text-base lg:text-lg font-bold" id="exerciseStatus">คุณยังไม่ออกกำลังกาย</p>
                     </div>
-                    <div class="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-                        <p class="text-sm font-medium mb-1">แต้มสะสม</p>
-                        <p class="text-lg font-bold"><span id="totalPoints">150</span> แต้ม</p>
+                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
+                        <p class="text-xs sm:text-sm font-medium mb-1">แต้มสะสม</p>
+                        <p class="text-sm sm:text-base lg:text-lg font-bold"><span id="totalPoints">150</span> แต้ม</p>
                     </div>
-                    <div class="bg-white/20 rounded-2xl p-4 backdrop-blur-sm">
-                        <p class="text-sm font-medium mb-1">ส่งผลติดต่อกัน</p>
-                        <p class="text-lg font-bold"><span id="consecutiveDays">5</span> วัน</p>
+                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm sm:col-span-2 lg:col-span-1">
+                        <p class="text-xs sm:text-sm font-medium mb-1">ส่งผลติดต่อกัน</p>
+                        <p class="text-sm sm:text-base lg:text-lg font-bold"><span id="consecutiveDays">5</span> วัน</p>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-effect rounded-3xl p-6 mb-6 border border-white/20">
-                <div class="flex items-center mb-6">
-                    <span class="text-2xl mr-3">⏱️</span>
-                    <h4 class="text-xl font-bold text-gray-800">ระยะเวลาการออกกำลังกาย</h4>
+            <!-- Exercise Time Section -->
+            <div class="glass-effect rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 border border-white/20">
+                <div class="flex items-center mb-4 sm:mb-6">
+                    <span class="text-xl sm:text-2xl mr-3">⏱️</span>
+                    <h4 class="text-base sm:text-lg lg:text-xl font-bold text-gray-800">ระยะเวลาการออกกำลังกาย</h4>
                 </div>
-                <div class="relative mb-6">
-                    <div class="flex justify-between text-sm font-medium text-gray-600 mb-4">
-                        <span class="bg-gray-100 px-3 py-1 rounded-full">0 นาที</span>
-                        <span class="bg-gray-100 px-3 py-1 rounded-full">15 นาที</span>
-                        <span class="bg-gray-100 px-3 py-1 rounded-full">30 นาที</span>
-                        <span class="bg-gray-100 px-3 py-1 rounded-full">45 นาที</span>
-                        <span class="bg-gray-100 px-3 py-1 rounded-full">1 ชั่วโมง</span>
+                <div class="relative mb-4 sm:mb-6">
+                    <div class="flex justify-between text-xs sm:text-sm font-medium text-gray-600 mb-3 sm:mb-4 overflow-x-auto">
+                        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">0 นาที</span>
+                        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">15 นาที</span>
+                        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">30 นาที</span>
+                        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">45 นาที</span>
+                        <span class="bg-gray-100 px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">1 ชั่วโมง</span>
                     </div>
-                    <div class="w-full bg-gray-200 rounded-full h-6 relative shadow-inner">
-                        <div class="bg-gradient-to-r from-green-400 to-green-600 h-6 rounded-full shadow-lg" style="width: 50%"></div>
-                        <div class="runner-animation absolute top-0 bg-gradient-to-r from-blue-500 to-blue-600 w-10 h-10 rounded-full flex items-center justify-center -mt-2 text-white text-lg shadow-lg border-2 border-white" style="left: 50%; transform: translateX(-50%)">
+                    <div class="w-full bg-gray-200 rounded-full h-4 sm:h-6 relative shadow-inner">
+                        <div class="bg-gradient-to-r from-green-400 to-green-600 h-4 sm:h-6 rounded-full shadow-lg" style="width: 50%"></div>
+                        <div class="runner-animation absolute top-0 bg-gradient-to-r from-blue-500 to-blue-600 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 rounded-full flex items-center justify-center -mt-1 sm:-mt-2 text-white text-sm sm:text-base lg:text-lg shadow-lg border-2 border-white" style="left: 50%; transform: translateX(-50%)">
                             🏃
                         </div>
                     </div>
                 </div>
                 <div class="text-center">
-                    <input type="range" id="exerciseSlider" min="0" max="60" value="30" class="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-4" onchange="updateExerciseTime(this.value)">
-                    <div class="bg-green-100 rounded-2xl p-4">
-                        <p class="text-lg font-bold text-green-800">ปัจจุบัน: <span id="currentTime" class="text-2xl text-green-600">30</span> นาที</p>
-                        <p class="text-sm text-green-600 mt-1">เลื่อนแถบเพื่อปรับเวลา</p>
+                    <input type="range" id="exerciseSlider" min="0" max="60" value="30" class="w-full h-2 sm:h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer mb-3 sm:mb-4" onchange="updateExerciseTime(this.value)">
+                    <div class="bg-green-100 rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                        <p class="text-base sm:text-lg font-bold text-green-800">ปัจจุบัน: <span id="currentTime" class="text-lg sm:text-xl lg:text-2xl text-green-600">30</span> นาที</p>
+                        <p class="text-xs sm:text-sm text-green-600 mt-1">เลื่อนแถบเพื่อปรับเวลา</p>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-effect rounded-3xl p-6 mb-6 border border-white/20">
-                <div class="flex items-center mb-6">
-                    <span class="text-2xl mr-3">📸</span>
-                    <h4 class="text-xl font-bold text-gray-800">อัพโหลดภาพการออกกำลังกาย</h4>
+            <!-- Photo Upload Section -->
+            <div class="glass-effect rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6">
+                <div class="flex items-center mb-4 sm:mb-6">
+                    <span class="text-xl sm:text-2xl mr-3">📸</span>
+                    <h4 class="text-base sm:text-lg lg:text-xl font-bold text-gray-800">อัพโหลดภาพการออกกำลังกาย</h4>
                 </div>
-                <div class="grid grid-cols-1 gap-4 mb-6">
-                    
-                    <button onclick="uploadPhoto()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-6 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="mb-4 sm:mb-6">
+                    <button onclick="uploadPhoto()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 sm:py-6 px-4 sm:px-8 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 sm:space-x-4">
+                        <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                         </svg>
-                        <span class="text-2xl">อัพโหลดภาพ</span>
+                        <span class="text-base sm:text-lg lg:text-2xl">อัพโหลดภาพ</span>
                     </button>
                 </div>
                 <input type="file" id="photoInput" accept=".jpg,.png" style="display: none;" onchange="handlePhotoUpload(event)">
-                <div class="photo-upload-area rounded-2xl p-6 text-center bg-green-50 mx-auto" style="width: 450px; height: 450px;">
-                    <div id="uploadPlaceholder" class="flex flex-col items-center justify-center h-full">
-                        <span class="text-6xl mb-4 block">📷</span>
-                        <p class="text-gray-600 font-medium text-lg">คลิกปุ่มด้านบนเพื่อถ่ายภาพหรืออัพโหลด</p>
-                        <p class="text-sm text-gray-500 mt-2">รองรับไฟล์ .jpg และ .png เท่านั้น</p>
-                        <div class="mt-4 text-sm text-gray-400">
-                            <p>ขนาด: 450 x 450 พิกเซล</p>
-                        </div>
+                <div class="photo-upload-area rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center bg-green-50 mx-auto">
+                    <div id="uploadPlaceholder" class="flex flex-col items-center justify-center h-full min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]">
+                        <span class="text-4xl sm:text-5xl lg:text-6xl mb-3 sm:mb-4 block">📷</span>
+                        <p class="text-gray-600 font-medium text-sm sm:text-base lg:text-lg mb-2">คลิกปุ่มด้านบนเพื่อถ่ายภาพหรืออัพโหลด</p>
+                        <p class="text-xs sm:text-sm text-gray-500">รองรับไฟล์ .jpg และ .png เท่านั้น</p>
                     </div>
                     <div id="photoPreview" class="hidden h-full flex flex-col">
-                        <img id="previewImage" class="w-full h-full object-cover rounded-2xl shadow-lg" style="width: 438px; height: 380px;" alt="ภาพตัวอย่าง">
-                        <p class="text-green-600 font-medium mt-3 text-lg">✅ อัพโหลดภาพสำเร็จ</p>
+                        <img id="previewImage" class="w-full max-w-md mx-auto h-auto object-cover rounded-xl sm:rounded-2xl shadow-lg" alt="ภาพตัวอย่าง">
+                        <p class="text-green-600 font-medium mt-3 text-sm sm:text-base lg:text-lg">✅ อัพโหลดภาพสำเร็จ</p>
                     </div>
                 </div>
             </div>
 
-            <button onclick="submitData()" class="submit-button w-full text-white font-bold py-5 px-8 rounded-2xl text-xl transition-all duration-300 flex items-center justify-center space-x-3">
-                <span class="text-2xl">🚀</span>
+            <!-- Submit Button -->
+            <button onclick="submitData()" class="submit-button w-full text-white font-bold py-4 sm:py-5 px-6 sm:px-8 rounded-xl sm:rounded-2xl text-base sm:text-lg lg:text-xl transition-all duration-300 flex items-center justify-center space-x-3">
+                <span class="text-xl sm:text-2xl">🚀</span>
                 <span>ส่งข้อมูลเข้าระบบ</span>
             </button>
         </div>
     </div>
 
-    <div id="levelPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-4xl">🐰</span>
+    <!-- Level Popup -->
+    <div id="levelPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md w-full shadow-2xl">
+            <div class="text-center mb-4 sm:mb-6">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                    <span class="text-2xl sm:text-3xl lg:text-4xl">🏰</span>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">เลเวล <span id="level">0</span></h2>
-                <div id="levelStarsPopup" class="flex justify-center space-x-1 mb-4">
+                <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2">เลเวล <span id="level">0</span></h2>
+                <div id="levelStarsPopup" class="flex justify-center space-x-1 mb-3 sm:mb-4">
                 </div>
             </div>
             
-            <div class="mb-6">
-    <div class="flex justify-between text-sm text-gray-600 mb-2">
-        <span>EXP</span>
-        <span><span id="currentExp">10</span>/<span id="nextLevelExp">50</span></span>
-    </div>
-    <div class="w-full bg-gray-200 rounded-full h-4 relative">
-        <div id="progressBar" class="progress-bar h-4 rounded-full" style="width: 20%"></div>
-    </div>
-    <p id="expToNext" class="text-xs text-gray-500 mt-1 text-center">อีก 40 EXP เพื่อเลเวล 1</p>
-</div>
-
+            <div class="mb-4 sm:mb-6">
+                <div class="flex justify-between text-xs sm:text-sm text-gray-600 mb-2">
+                    <span>EXP</span>
+                    <span><span id="currentExp">10</span>/<span id="nextLevelExp">50</span></span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-3 sm:h-4 relative">
+                    <div id="progressBar" class="progress-bar h-3 sm:h-4 rounded-full" style="width: 20%"></div>
+                </div>
+                <p id="expToNext" class="text-xs text-gray-500 mt-1 text-center">อีก 40 EXP เพื่อเลเวล 1</p>
+            </div>
             
-            <button onclick="showExpInfo()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full mb-4 transition duration-300">
+            <button onclick="showExpInfo()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-full mb-3 sm:mb-4 transition duration-300 text-sm sm:text-base">
                 EXP ได้รับอย่างไร
             </button>
             
-            <button onclick="closeLevelPopup()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-3 px-6 rounded-full transition duration-300">
+            <button onclick="closeLevelPopup()" class="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-full transition duration-300 text-sm sm:text-base">
                 ปิด
             </button>
         </div>
     </div>
 
-    <div id="expInfoPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">รายละเอียดเงื่อนไข</h2>
+    <!-- EXP Info Popup -->
+    <div id="expInfoPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md w-full shadow-2xl">
+            <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 mb-4 sm:mb-6 text-center">รายละเอียดเงื่อนไข</h2>
             
-            <div class="bg-green-50 rounded-2xl p-4 mb-6">
-                <table class="w-full text-sm">
+            <div class="bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 sm:mb-6">
+                <table class="w-full text-xs sm:text-sm">
                     <thead>
                         <tr class="border-b border-green-200">
                             <th class="text-left py-2 font-semibold">เงื่อนไข</th>
@@ -257,19 +261,22 @@
                 </table>
             </div>
             
-            <button onclick="closeExpInfo()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full transition duration-300">
+            <button onclick="closeExpInfo()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-full transition duration-300 text-sm sm:text-base">
                 เข้าใจแล้ว
             </button>
         </div>
     </div>
-    <div class="text-center mt-8">
-                    <button onclick="quickLogout()" class="logout-btn">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                        </svg>
-                        <span>ออกจากระบบ</span>
-                    </button>
-                </div>
+
+    <!-- Logout Button -->
+    <div class="text-center pb-4 sm:pb-6">
+        <button onclick="quickLogout()" class="logout-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+            <span>ออกจากระบบ</span>
+        </button>
+    </div>
+
     <script type="module" src="script2.js"></script>
 </body>
 </html>

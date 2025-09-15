@@ -522,7 +522,7 @@ async function submitData() {
         }
         
         const compressedImage = await compressImage(currentPhotoData.base64, 400, 0.5);
- 
+
         const sheetData = {
             timestamp: now.toISOString(),
             date: today,
@@ -1062,34 +1062,3 @@ window.debugSheetBest = async function() {
         alert(`การทดสอบล้มเหลว: ${error.message}`);
     }
 };
-function openCamera() {
-    const cameraInput = document.getElementById('cameraInput');
-    if (cameraInput) {
-        cameraInput.click();
-    } else {
-        // fallback ถ้าไม่มี cameraInput
-        document.getElementById('photoInput').click();
-    }
-}
-
-function selectFromGallery() {
-    const galleryInput = document.getElementById('galleryInput');
-    if (galleryInput) {
-        galleryInput.click();
-    } else {
-        // fallback ถ้าไม่มี galleryInput
-        const photoInput = document.getElementById('photoInput');
-        photoInput.removeAttribute('capture'); // ลบ capture เพื่อให้เลือกจากแกลเลอรี่
-        photoInput.click();
-    }
-}
-
-// สำหรับใช้กับปุ่มเดิม (ถ้ามี)
-function uploadPhoto() {
-    // แสดงตัวเลือกให้ผู้ใช้เลือก
-    if (confirm('ต้องการถ่ายภาพใหม่หรือเลือกจากแกลเลอรี่?\n\n- กด OK เพื่อถ่ายภาพ\n- กด Cancel เพื่อเลือกจากแกลเลอรี่')) {
-        openCamera();
-    } else {
-        selectFromGallery();
-    }
-}

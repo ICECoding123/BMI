@@ -462,8 +462,10 @@ async function submitForm() {
             level: 0,
             exp: 10,
             experiencePoints: 10,
+            totaltime: 0,
             consecutiveDays: 0,
             timestamp: new Date()
+            
         };
         
         if (db) {

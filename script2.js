@@ -12,6 +12,8 @@ const SHEET_BEST_URL = 'https://sheet.best/api/sheets/49762d95-6c55-4a1f-9a48-01
 
 // Global variable to store current photo data
 let currentPhotoData = null;
+let selectedExerciseType = '';
+let selectedExerciseIcon = '';
 
 // Progressive EXP System - Level thresholds
 const LEVEL_THRESHOLDS = [
@@ -22,6 +24,63 @@ const LEVEL_THRESHOLDS = [
     { level: 4, minExp: 320, maxExp: 500, nextLevelExp: 500 },  // Level 4: 321-500 exp
     { level: 5, minExp: 500, maxExp: Infinity, nextLevelExp: null } // Level 5: MAX LEVEL
 ];
+
+// Exercise type selection functions
+function selectExerciseType(type, icon) {
+    selectedExerciseType = type;
+    selectedExerciseIcon = icon;
+    
+    // Update UI
+    const selectedExerciseDiv = document.getElementById('selectedExercise');
+    const selectedExerciseText = document.getElementById('selectedExerciseText');
+    const selectedExerciseIconElement = document.getElementById('selectedExerciseIcon');
+    
+    if (selectedExerciseDiv) {
+        selectedExerciseDiv.classList.remove('hidden');
+    }
+    
+    if (selectedExerciseText) {
+        selectedExerciseText.textContent = type;
+    }
+    
+    if (selectedExerciseIconElement) {
+        selectedExerciseIconElement.textContent = icon;
+    }
+    
+    // Remove active class from all buttons and add to selected
+    const exerciseButtons = document.querySelectorAll('.exercise-type-btn');
+    exerciseButtons.forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-blue-300', 'bg-blue-200');
+    });
+    
+    // Add active styling to selected button
+    const selectedButton = document.querySelector(`[onclick="selectExerciseType('${type}', '${icon}')"]`);
+    if (selectedButton) {
+        selectedButton.classList.add('ring-4', 'ring-blue-300', 'bg-blue-200');
+    }
+    
+    console.log(`Selected exercise: ${type} (${icon})`);
+    showNotification(`เลือก${type}แล้ว!`, 'success');
+}
+
+function clearExerciseSelection() {
+    selectedExerciseType = '';
+    selectedExerciseIcon = '';
+    
+    const selectedExerciseDiv = document.getElementById('selectedExercise');
+    if (selectedExerciseDiv) {
+        selectedExerciseDiv.classList.add('hidden');
+    }
+    
+    // Remove active styling from all buttons
+    const exerciseButtons = document.querySelectorAll('.exercise-type-btn');
+    exerciseButtons.forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-blue-300', 'bg-blue-200');
+    });
+    
+    console.log('Exercise selection cleared');
+    showNotification('ยกเลิกการเลือกแล้ว', 'info');
+}
 
 // EXP System Functions
 function calculateLevel(totalExp) {
@@ -82,7 +141,7 @@ function getDisplayName(userData = null) {
     // 2. userData.name (full name from profile)
     // 3. userData.displayName 
     // 4. Firebase Auth displayName
-    // 5. Firebase Auth email (เเค่ส่วนหน้า @ ถ้ามี)
+    // 5. Firebase Auth email (แค่ส่วนหน้า @ ถ้ามี)
     // 6. Default fallback
     
     // Check for separate first and last name fields
@@ -441,7 +500,7 @@ async function getUserData() {
     }
 }
 
-// Submit Data with proper EXP system
+// Submit Data with proper EXP system and exercise type
 async function submitData() {
     let submitButton;
     let originalText;
@@ -462,6 +521,12 @@ async function submitData() {
         
         if (!photoUploaded || !currentPhotoData) {
             showNotification('กรุณาอัพโหลดภาพก่อนส่งข้อมูล', 'error');
+            return;
+        }
+
+        // Check if exercise type is selected
+        if (!selectedExerciseType || !selectedExerciseIcon) {
+            showNotification('กรุณาเลือกประเภทการออกกำลังกายก่อน', 'error');
             return;
         }
 
@@ -513,7 +578,9 @@ async function submitData() {
             lastExerciseDate: today,
             exerciseStreak: newDays,
             photoSubmitted: true,
-            lastSubmissionTime: now.toISOString()
+            lastSubmissionTime: now.toISOString(),
+            lastExerciseType: selectedExerciseType,
+            lastExerciseIcon: selectedExerciseIcon
         };
 
         // Compress image for Google Sheets
@@ -531,6 +598,8 @@ async function submitData() {
             lastName: lastName,
             fullName: displayName,
             exerciseTime: exerciseTime,
+            exerciseType: selectedExerciseType,
+            exerciseIcon: selectedExerciseIcon,
             healthPoints: newPoints,
             consecutiveDays: newDays,
             level: newLevel,
@@ -541,10 +610,10 @@ async function submitData() {
             imageSize: currentPhotoData.size,
             imageType: currentPhotoData.type,
             submissionStatus: 'Success',
-            notes: `Exercise: ${exerciseTime} minutes, Level: ${newLevel}, EXP: ${newExp}, Photo: ${currentPhotoData.filename}, Name: ${firstName} ${lastName}`
+            notes: `Exercise: ${selectedExerciseType} (${exerciseTime} min), Level: ${newLevel}, EXP: ${newExp}, Photo: ${currentPhotoData.filename}, Name: ${firstName} ${lastName}`
         };
 
-        console.log('Data prepared:', { dataToUpdate, newExp, newLevel, currentLevel, firstName, lastName, displayName });
+        console.log('Data prepared:', { dataToUpdate, newExp, newLevel, currentLevel, firstName, lastName, displayName, exerciseType: selectedExerciseType });
 
         // Step 1: Save to Firestore
         if (submitButton) {
@@ -608,13 +677,16 @@ async function submitData() {
         
         // Final success message
         if (sheetsSuccess) {
-            showNotification(`ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +${pointGain} แต้ม, +${expGain} EXP (รวมรูปภาพ)`, 'success');
+            showNotification(`ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +${pointGain} แต้ม, +${expGain} EXP (รวมรูปภาพ) - ${selectedExerciseType}`, 'success');
         } else {
-            showNotification(`บันทึกในแอปสำเร็จ! ได้รับ +${pointGain} แต้ม, +${expGain} EXP (Google Sheets จะอัพเดทภายหลัง)`, 'success');
+            showNotification(`บันทึกในแอปสำเร็จ! ได้รับ +${pointGain} แต้ม, +${expGain} EXP (Google Sheets จะอัพเดทภายหลัง) - ${selectedExerciseType}`, 'success');
         }
         
-        // Clear photo data and disable submit button
+        // Clear data and disable submit button
         currentPhotoData = null;
+        selectedExerciseType = '';
+        selectedExerciseIcon = '';
+        clearExerciseSelection();
         
         if (submitButton) {
             submitButton.disabled = true;
@@ -970,6 +1042,8 @@ window.addEventListener('load', () => {
 });
 
 // Make functions available globally
+window.selectExerciseType = selectExerciseType;
+window.clearExerciseSelection = clearExerciseSelection;
 window.updateExerciseTime = updateExerciseTime;
 window.takePhoto = takePhoto;
 window.uploadPhoto = uploadPhoto;
@@ -988,10 +1062,11 @@ window.quickLogout = quickLogout;
 
 // Debug function for testing
 window.debugSheetBest = async function() {
-    console.log('=== Debug Sheet.best Connection (with Health Points & Consecutive Days starting at 0) ===');
+    console.log('=== Debug Sheet.best Connection with Exercise Type Selection ===');
     console.log('URL:', SHEET_BEST_URL);
     console.log('Online:', navigator.onLine);
-    console.log('EXP Thresholds:', LEVEL_THRESHOLDS);
+    console.log('Selected Exercise Type:', selectedExerciseType);
+    console.log('Selected Exercise Icon:', selectedExerciseIcon);
     
     if (SHEET_BEST_URL.includes('YOUR_SHEET_ID_HERE')) {
         console.log('❌ กรุณาแทนที่ SHEET_BEST_URL ด้วย URL จริงจาก Sheet.best');
@@ -999,7 +1074,7 @@ window.debugSheetBest = async function() {
     }
     
     // Test the new EXP system
-    console.log('=== Testing Progressive EXP System (Starting from 0) ===');
+    console.log('=== Testing Progressive EXP System with Exercise Types ===');
     const testExpValues = [0, 20, 40, 50, 100, 150, 180, 250, 320, 400, 500, 600];
     
     testExpValues.forEach(exp => {
@@ -1032,7 +1107,7 @@ window.debugSheetBest = async function() {
     ctx.fillRect(0, 0, 1, 1);
     const testImageBase64 = canvas.toDataURL('image/png');
     
-    console.log('✅ Testing data send with Health Points & Consecutive Days starting at 0...');
+    console.log('✅ Testing data send with Exercise Type Selection...');
     try {
         const testData = {
             timestamp: new Date().toISOString(),
@@ -1042,21 +1117,23 @@ window.debugSheetBest = async function() {
             lastName: currentLastName + ' (ระบบ)',
             fullName: currentDisplayName + ' (ทดสอบระบบ)',
             exerciseTime: 30,
+            exerciseType: 'วิ่ง (ทดสอบ)',
+            exerciseIcon: '🏃‍♂️',
             healthPoints: 5,       // เริ่มต้นจาก 0 + 5 = 5 points
             consecutiveDays: 1,    // เริ่มต้นจาก 0 + 1 = 1 day
             level: 0,              // ยังคงเลเวล 0 (ต้อง 40 EXP ถึงจะเลเวล 1)
             exp: 5,                // เริ่มต้นจาก 0 + 5 = 5 EXP
             hasPhoto: 'Yes',
             image: testImageBase64,
-            imageFilename: 'test-zero-start.png',
+            imageFilename: 'test-exercise-type.png',
             imageSize: testImageBase64.length,
             imageType: 'image/png',
-            submissionStatus: 'Test Starting from Zero',
-            notes: `Testing Zero Start System - ${currentFirstName} ${currentLastName} - Start: 0 HP, 0 Days, 0 EXP → After first submission: 5 HP, 1 Day, 5 EXP`
+            submissionStatus: 'Test Exercise Type Selection',
+            notes: `Testing Exercise Type System - ${currentFirstName} ${currentLastName} - Exercise: วิ่ง (30 min) - Start: 0 HP, 0 Days, 0 EXP → After: 5 HP, 1 Day, 5 EXP`
         };
         const result = await sendToSheetBest(testData);
-        console.log('✅ Test send with Zero Start System successful:', result);
-        alert(`การทดสอบ Zero Start System สำเร็จ!\nเริ่มต้น: 0 HP, 0 วัน, 0 EXP\nหลังส่งครั้งแรก: 5 HP, 1 วัน, 5 EXP\nตรวจสอบ Google Sheet ของคุณ`);
+        console.log('✅ Test send with Exercise Type Selection successful:', result);
+        alert(`การทดสอบ Exercise Type Selection สำเร็จ!\nประเภทการออกกำลังกาย: วิ่ง 🏃‍♂️\nเวลา: 30 นาที\nเริ่มต้น: 0 HP, 0 วัน, 0 EXP\nหลังส่งครั้งแรก: 5 HP, 1 วัน, 5 EXP\nตรวจสอบ Google Sheet ของคุณ`);
     } catch (error) {
         console.log('❌ Test send failed:', error);
         alert(`การทดสอบล้มเหลว: ${error.message}`);

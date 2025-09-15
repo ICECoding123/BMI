@@ -128,23 +128,31 @@
             <!-- Exercise Card -->
             <div class="exercise-card rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 text-white">
                 <div class="flex items-center mb-3 sm:mb-4">
-                    <span class="text-2xl sm:text-3xl mr-3">🏃‍♂️</span>
-                    <h3 class="text-lg sm:text-xl lg:text-2xl font-bold">ผลการออกกำลังกายประจำวัน</h3>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
-                        <p class="text-xs sm:text-sm font-medium mb-1">สถานะ</p>
-                        <p class="text-sm sm:text-base lg:text-lg font-bold" id="exerciseStatus">คุณยังไม่ออกกำลังกาย</p>
-                    </div>
-                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
-                        <p class="text-xs sm:text-sm font-medium mb-1">แต้มสะสม</p>
-                        <p class="text-sm sm:text-base lg:text-lg font-bold"><span id="totalPoints">150</span> แต้ม</p>
-                    </div>
-                    <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm sm:col-span-2 lg:col-span-1">
-                        <p class="text-xs sm:text-sm font-medium mb-1">ส่งผลติดต่อกัน</p>
-                        <p class="text-sm sm:text-base lg:text-lg font-bold"><span id="consecutiveDays">5</span> วัน</p>
-                    </div>
-                </div>
+        <span class="text-2xl sm:text-3xl mr-3">🏃‍♂️</span>
+        <h3 class="text-lg sm:text-xl lg:text-2xl font-bold">ผลการออกกำลังกายประจำวัน</h3>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
+            <p class="text-xs sm:text-sm font-medium mb-1">สถานะ</p>
+            <p class="text-sm sm:text-base lg:text-lg font-bold" id="exerciseStatus">คุณยังไม่ออกกำลังกาย</p>
+        </div>
+        <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
+            <p class="text-xs sm:text-sm font-medium mb-1">แต้มสะสม</p>
+            <p class="text-sm sm:text-base lg:text-lg font-bold"><span id="totalPoints">150</span> แต้ม</p>
+        </div>
+        <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
+            <p class="text-xs sm:text-sm font-medium mb-1">ส่งผลติดต่อกัน</p>
+            <p class="text-sm sm:text-base lg:text-lg font-bold"><span id="consecutiveDays">5</span> วัน</p>
+        </div>
+        <!-- New Total Exercise Time Section -->
+        <div class="bg-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 backdrop-blur-sm">
+            <p class="text-xs sm:text-sm font-medium mb-1">รวมเวลาทั้งหมด</p>
+            <p class="text-sm sm:text-base lg:text-lg font-bold">
+                <span id="totalExerciseTime">0</span> 
+                <span class="text-xs opacity-80">นาที</span>
+            </p>
+        </div>
+    </div>
             </div>
 
             <!-- Exercise Time Section -->
@@ -176,7 +184,64 @@
                     </div>
                 </div>
             </div>
-
+<div class="glass-effect rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 border border-white/20">
+                <div class="flex items-center mb-4 sm:mb-6">
+                    <span class="text-xl sm:text-2xl mr-3">🏃‍♀️</span>
+                    <h4 class="text-base sm:text-lg lg:text-xl font-bold text-gray-800">เลือกประเภทการออกกำลังกาย</h4>
+                </div>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4 sm:mb-6">
+                    <button onclick="selectExerciseType('เดินเร็ว', '🚶‍♂️')" 
+                            class="exercise-type-btn bg-gradient-to-br from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border-2 border-blue-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 flex flex-col items-center space-y-2">
+                        <span class="text-2xl sm:text-3xl">🚶‍♂️</span>
+                        <span class="text-xs sm:text-sm font-medium text-blue-700">เดินเร็ว</span>
+                    </button>
+                    
+                    <button onclick="selectExerciseType('วิ่ง', '🏃‍♂️')" 
+                            class="exercise-type-btn bg-gradient-to-br from-red-50 to-red-100 hover:from-red-100 hover:to-red-200 border-2 border-red-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 flex flex-col items-center space-y-2">
+                        <span class="text-2xl sm:text-3xl">🏃‍♂️</span>
+                        <span class="text-xs sm:text-sm font-medium text-red-700">วิ่ง</span>
+                    </button>
+                    
+                    <button onclick="selectExerciseType('ปั่นจักรยาน', '🚴‍♂️')" 
+                            class="exercise-type-btn bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 border-2 border-green-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 flex flex-col items-center space-y-2">
+                        <span class="text-2xl sm:text-3xl">🚴‍♂️</span>
+                        <span class="text-xs sm:text-sm font-medium text-green-700">ปั่นจักรยาน</span>
+                    </button>
+                    
+                    <button onclick="selectExerciseType('ทำงานบ้าน', '🧹')" 
+                            class="exercise-type-btn bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 border-2 border-purple-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 flex flex-col items-center space-y-2">
+                        <span class="text-2xl sm:text-3xl">🧹</span>
+                        <span class="text-xs sm:text-sm font-medium text-purple-700">ทำงานบ้าน</span>
+                    </button>
+                    
+                    <button onclick="selectExerciseType('โยคะ', '🧘‍♀️')" 
+                            class="exercise-type-btn bg-gradient-to-br from-pink-50 to-pink-100 hover:from-pink-100 hover:to-pink-200 border-2 border-pink-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 flex flex-col items-center space-y-2">
+                        <span class="text-2xl sm:text-3xl">🧘‍♀️</span>
+                        <span class="text-xs sm:text-sm font-medium text-pink-700">โยคะ</span>
+                    </button>
+                    
+                    <button onclick="selectExerciseType('อื่นๆ', '💪')" 
+                            class="exercise-type-btn bg-gradient-to-br from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 border-2 border-orange-200 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 flex flex-col items-center space-y-2">
+                        <span class="text-2xl sm:text-3xl">💪</span>
+                        <span class="text-xs sm:text-sm font-medium text-orange-700">อื่นๆ</span>
+                    </button>
+                </div>
+                
+                <!-- Selected Exercise Display -->
+                <div id="selectedExercise" class="bg-green-100 rounded-xl sm:rounded-2xl p-3 sm:p-4 mb-4 hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <span id="selectedExerciseIcon" class="text-2xl sm:text-3xl">🏃‍♂️</span>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">กิจกรรมที่เลือก:</p>
+                                <p id="selectedExerciseText" class="text-base sm:text-lg font-bold text-green-700">วิ่ง</p>
+                            </div>
+                        </div>
+                        <button onclick="clearExerciseSelection()" class="text-red-500 hover:text-red-700 font-bold text-xl">×</button>
+                    </div>
+                </div>
+            </div>
             <!-- Photo Upload Section -->
             <div class="glass-effect rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6">
                 <div class="flex items-center mb-4 sm:mb-6">
@@ -244,11 +309,12 @@
                 <span>ส่งข้อมูลเข้าระบบ</span>
             </button>
         </div>
+        
     </div>
 
     <!-- Level Popup -->
     <div id="levelPopup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md w-full shadow-2xl">
+        <div class="bg-white rounded -2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 max-w-sm sm:max-w-md w-full shadow-2xl">
             <div class="text-center mb-4 sm:mb-6">
                 <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                     <span class="text-2xl sm:text-3xl lg:text-4xl">🐰</span>
@@ -277,6 +343,8 @@
                 ปิด
             </button>
         </div>
+        
+        
     </div>
 
     <!-- EXP Info Popup -->
@@ -484,6 +552,7 @@
             // กำหนดค่าเริ่มต้น
             updateExerciseTime(30);
         });
+        
     </script>
 
     <script type="module" src="script2.js"></script>

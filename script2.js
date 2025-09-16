@@ -10,10 +10,11 @@ const appId = 'default-app-id';
 // Sheet.best API URL
 const SHEET_BEST_URL = 'https://sheet.best/api/sheets/49762d95-6c55-4a1f-9a48-0169dce585d6';
 
-// Global variable to store current photo data
+// Global variables
 let currentPhotoData = null;
 let selectedExerciseType = '';
 let selectedExerciseIcon = '';
+let totalExerciseTimeMinutes = 0; // New: Total exercise time tracker
 
 // Progressive EXP System - Level thresholds
 const LEVEL_THRESHOLDS = [
@@ -134,6 +135,30 @@ function isMaxLevel(level) {
     return level >= 5;
 }
 
+// Total Exercise Time Functions
+function updateTotalExerciseTimeDisplay() {
+    const totalTimeElement = document.getElementById('totalExerciseTime');
+    if (totalTimeElement) {
+        totalTimeElement.textContent = totalExerciseTimeMinutes;
+    }
+    
+    console.log('Total exercise time display updated:', totalExerciseTimeMinutes, 'minutes');
+}
+
+function formatExerciseTime(minutes) {
+    if (minutes < 60) {
+        return `${minutes} นาที`;
+    } else {
+        const hours = Math.floor(minutes / 60);
+        const remainingMinutes = minutes % 60;
+        if (remainingMinutes === 0) {
+            return `${hours} ชั่วโมง`;
+        } else {
+            return `${hours} ชม ${remainingMinutes} นาที`;
+        }
+    }
+}
+
 // Function to get display name with proper priority
 function getDisplayName(userData = null) {
     // Priority order for display name:
@@ -203,33 +228,45 @@ async function loadUserData() {
             const userData = docSnap.data();
             console.log('Loading user data:', userData);
             
+            // Load total exercise time
+            totalExerciseTimeMinutes = userData.totalExerciseTime || 0;
+            
             // Update UI with loaded data
             updateUserDataDisplay(userData);
+            updateTotalExerciseTimeDisplay();
         } else {
             console.log('No user data found, using defaults');
+            totalExerciseTimeMinutes = 0;
+            
             // Set default values - เริ่มต้นที่ 0
             const defaultData = {
                 healthPoints: 0,        // เปลี่ยนจาก 150 เป็น 0
                 consecutiveDays: 0,     // เปลี่ยนจาก 5 เป็น 0
                 exp: 0,                 // เปลี่ยนจาก 10 เป็น 0
                 level: 0,
+                totalExerciseTime: 0,
                 firstName: getFirstName(),
                 lastName: getLastName()
             };
             updateUserDataDisplay(defaultData);
+            updateTotalExerciseTimeDisplay();
         }
     } catch (error) {
         console.error('Error loading user data:', error);
+        totalExerciseTimeMinutes = 0;
+        
         // Use defaults if error - เริ่มต้นที่ 0
         const defaultData = {
             healthPoints: 0,        // เปลี่ยนจาก 150 เป็น 0
             consecutiveDays: 0,     // เปลี่ยนจาก 5 เป็น 0
             exp: 0,                 // เปลี่ยนจาก 10 เป็น 0
             level: 0,
+            totalExerciseTime: 0,
             firstName: getFirstName(),
             lastName: getLastName()
         };
         updateUserDataDisplay(defaultData);
+        updateTotalExerciseTimeDisplay();
     }
 }
 
@@ -264,6 +301,10 @@ function updateUserDataDisplay(userData) {
         document.getElementById('consecutiveDays').textContent = userData.consecutiveDays || 0;  // เปลี่ยนจาก 5 เป็น 0
     }
     
+    // Update total exercise time
+    totalExerciseTimeMinutes = userData.totalExerciseTime || 0;
+    updateTotalExerciseTimeDisplay();
+    
     // Update popup displays
     updateExpDisplay(totalExp, level);
     
@@ -273,7 +314,7 @@ function updateUserDataDisplay(userData) {
         renderLevelStars('levelStarsPopup', level);
     }
     
-    console.log(`User data updated - Name: ${displayName}, Total EXP: ${totalExp}, Level: ${level}, Current Level EXP: ${currentLevelExp}`);
+    console.log(`User data updated - Name: ${displayName}, Total EXP: ${totalExp}, Level: ${level}, Current Level EXP: ${currentLevelExp}, Total Exercise Time: ${totalExerciseTimeMinutes} minutes`);
 }
 
 // Update EXP display in popup
@@ -500,7 +541,7 @@ async function getUserData() {
     }
 }
 
-// Submit Data with proper EXP system and exercise type
+// Submit Data with proper EXP system, exercise type, and total exercise time
 async function submitData() {
     let submitButton;
     let originalText;
@@ -549,17 +590,19 @@ async function submitData() {
         const currentLevel = calculateLevel(currentExp);
         const currentPoints = userData?.healthPoints || parseInt(document.getElementById('totalPoints').textContent) || 0;  // เปลี่ยนจาก fallback 0
         const currentDays = userData?.consecutiveDays || parseInt(document.getElementById('consecutiveDays').textContent) || 0;  // เปลี่ยนจาก fallback 0
+        const currentTotalTime = userData?.totalExerciseTime || totalExerciseTimeMinutes || 0; // Current total exercise time
         
         // Calculate new values
         const expGain = 5; // EXP ที่ได้รับจากการส่งข้อมูล
         const pointGain = 5; // Points ที่ได้รับ
+        const exerciseTime = parseInt(document.getElementById('currentTime').textContent) || 30;
         
         const newExp = currentExp + expGain;
         const newPoints = currentPoints + pointGain;
         const newDays = currentDays + 1;
+        const newTotalTime = currentTotalTime + exerciseTime; // Add current session time to total
         const newLevel = calculateLevel(newExp);
 
-        const exerciseTime = parseInt(document.getElementById('currentTime').textContent) || 30;
         const displayName = getDisplayName(userData);
         const firstName = getFirstName(userData);
         const lastName = getLastName(userData);
@@ -575,6 +618,7 @@ async function submitData() {
             consecutiveDays: newDays,
             level: newLevel,
             exp: newExp, // บันทึก total EXP
+            totalExerciseTime: newTotalTime, // บันทึก total exercise time
             lastExerciseDate: today,
             exerciseStreak: newDays,
             photoSubmitted: true,
@@ -598,6 +642,7 @@ async function submitData() {
             lastName: lastName,
             fullName: displayName,
             exerciseTime: exerciseTime,
+            totalExerciseTime: newTotalTime, // Include total exercise time in sheet
             exerciseType: selectedExerciseType,
             exerciseIcon: selectedExerciseIcon,
             healthPoints: newPoints,
@@ -610,10 +655,10 @@ async function submitData() {
             imageSize: currentPhotoData.size,
             imageType: currentPhotoData.type,
             submissionStatus: 'Success',
-            notes: `Exercise: ${selectedExerciseType} (${exerciseTime} min), Level: ${newLevel}, EXP: ${newExp}, Photo: ${currentPhotoData.filename}, Name: ${firstName} ${lastName}`
+            notes: `Exercise: ${selectedExerciseType} (${exerciseTime} min), Total Time: ${newTotalTime} min, Level: ${newLevel}, EXP: ${newExp}, Photo: ${currentPhotoData.filename}, Name: ${firstName} ${lastName}`
         };
 
-        console.log('Data prepared:', { dataToUpdate, newExp, newLevel, currentLevel, firstName, lastName, displayName, exerciseType: selectedExerciseType });
+        console.log('Data prepared:', { dataToUpdate, newExp, newLevel, currentLevel, firstName, lastName, displayName, exerciseType: selectedExerciseType, newTotalTime });
 
         // Step 1: Save to Firestore
         if (submitButton) {
@@ -657,6 +702,10 @@ async function submitData() {
         animatePointIncrease('healthPoints', currentPoints, newPoints);
         document.getElementById('consecutiveDays').textContent = newDays;
         
+        // Update total exercise time
+        totalExerciseTimeMinutes = newTotalTime;
+        updateTotalExerciseTimeDisplay();
+        
         // Update EXP display
         updateExpDisplay(newExp, newLevel);
         
@@ -677,9 +726,9 @@ async function submitData() {
         
         // Final success message
         if (sheetsSuccess) {
-            showNotification(`ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +${pointGain} แต้ม, +${expGain} EXP (รวมรูปภาพ) - ${selectedExerciseType}`, 'success');
+            showNotification(`ส่งข้อมูลสำเร็จทั้งในแอปและ Google Sheets! ได้รับ +${pointGain} แต้ม, +${expGain} EXP, +${exerciseTime} นาทีรวม (รวมรูปภาพ) - ${selectedExerciseType}`, 'success');
         } else {
-            showNotification(`บันทึกในแอปสำเร็จ! ได้รับ +${pointGain} แต้ม, +${expGain} EXP (Google Sheets จะอัพเดทภายหลัง) - ${selectedExerciseType}`, 'success');
+            showNotification(`บันทึกในแอปสำเร็จ! ได้รับ +${pointGain} แต้ม, +${expGain} EXP, +${exerciseTime} นาทีรวม (Google Sheets จะอัพเดทภายหลัง) - ${selectedExerciseType}`, 'success');
         }
         
         // Clear data and disable submit button
@@ -1059,22 +1108,25 @@ window.removePhoto = removePhoto;
 window.loadUserData = loadUserData;
 window.renderLevelStars = renderLevelStars;
 window.quickLogout = quickLogout;
+window.updateTotalExerciseTimeDisplay = updateTotalExerciseTimeDisplay;
+window.formatExerciseTime = formatExerciseTime;
 
-// Debug function for testing
+// Debug function for testing with total exercise time
 window.debugSheetBest = async function() {
-    console.log('=== Debug Sheet.best Connection with Exercise Type Selection ===');
+    console.log('=== Debug Sheet.best Connection with Total Exercise Time ===');
     console.log('URL:', SHEET_BEST_URL);
     console.log('Online:', navigator.onLine);
     console.log('Selected Exercise Type:', selectedExerciseType);
     console.log('Selected Exercise Icon:', selectedExerciseIcon);
+    console.log('Total Exercise Time:', totalExerciseTimeMinutes, 'minutes');
     
     if (SHEET_BEST_URL.includes('YOUR_SHEET_ID_HERE')) {
         console.log('❌ กรุณาแทนที่ SHEET_BEST_URL ด้วย URL จริงจาก Sheet.best');
         return;
     }
     
-    // Test the new EXP system
-    console.log('=== Testing Progressive EXP System with Exercise Types ===');
+    // Test the new EXP system with total exercise time
+    console.log('=== Testing Progressive EXP System with Total Exercise Time ===');
     const testExpValues = [0, 20, 40, 50, 100, 150, 180, 250, 320, 400, 500, 600];
     
     testExpValues.forEach(exp => {
@@ -1092,9 +1144,12 @@ window.debugSheetBest = async function() {
     const currentDisplayName = getDisplayName(userData);
     const currentFirstName = getFirstName(userData);
     const currentLastName = getLastName(userData);
+    const currentTotalTime = userData?.totalExerciseTime || 0;
+    
     console.log('Current Display Name:', currentDisplayName);
     console.log('Current First Name:', currentFirstName);
     console.log('Current Last Name:', currentLastName);
+    console.log('Current Total Exercise Time:', currentTotalTime, 'minutes');
     console.log('Auth User:', auth.currentUser?.email, auth.currentUser?.displayName);
     console.log('User Data:', userData);
     
@@ -1107,8 +1162,11 @@ window.debugSheetBest = async function() {
     ctx.fillRect(0, 0, 1, 1);
     const testImageBase64 = canvas.toDataURL('image/png');
     
-    console.log('✅ Testing data send with Exercise Type Selection...');
+    console.log('✅ Testing data send with Total Exercise Time...');
     try {
+        const testExerciseTime = 45; // Test with 45 minutes
+        const testNewTotalTime = currentTotalTime + testExerciseTime;
+        
         const testData = {
             timestamp: new Date().toISOString(),
             date: new Date().toISOString().split('T')[0],
@@ -1116,24 +1174,26 @@ window.debugSheetBest = async function() {
             firstName: currentFirstName + ' (ทดสอบ)',
             lastName: currentLastName + ' (ระบบ)',
             fullName: currentDisplayName + ' (ทดสอบระบบ)',
-            exerciseTime: 30,
+            exerciseTime: testExerciseTime,
+            totalExerciseTime: testNewTotalTime, // Test total time tracking
             exerciseType: 'วิ่ง (ทดสอบ)',
             exerciseIcon: '🏃‍♂️',
-            healthPoints: 5,       // เริ่มต้นจาก 0 + 5 = 5 points
-            consecutiveDays: 1,    // เริ่มต้นจาก 0 + 1 = 1 day
-            level: 0,              // ยังคงเลเวล 0 (ต้อง 40 EXP ถึงจะเลเวล 1)
-            exp: 5,                // เริ่มต้นจาก 0 + 5 = 5 EXP
+            healthPoints: 5,
+            consecutiveDays: 1,
+            level: 0,
+            exp: 5,
             hasPhoto: 'Yes',
             image: testImageBase64,
-            imageFilename: 'test-exercise-type.png',
+            imageFilename: 'test-total-time.png',
             imageSize: testImageBase64.length,
             imageType: 'image/png',
-            submissionStatus: 'Test Exercise Type Selection',
-            notes: `Testing Exercise Type System - ${currentFirstName} ${currentLastName} - Exercise: วิ่ง (30 min) - Start: 0 HP, 0 Days, 0 EXP → After: 5 HP, 1 Day, 5 EXP`
+            submissionStatus: 'Test Total Exercise Time',
+            notes: `Testing Total Exercise Time System - ${currentFirstName} ${currentLastName} - Exercise: วิ่ง (${testExerciseTime} min) - Previous Total: ${currentTotalTime} min → New Total: ${testNewTotalTime} min`
         };
+        
         const result = await sendToSheetBest(testData);
-        console.log('✅ Test send with Exercise Type Selection successful:', result);
-        alert(`การทดสอบ Exercise Type Selection สำเร็จ!\nประเภทการออกกำลังกาย: วิ่ง 🏃‍♂️\nเวลา: 30 นาที\nเริ่มต้น: 0 HP, 0 วัน, 0 EXP\nหลังส่งครั้งแรก: 5 HP, 1 วัน, 5 EXP\nตรวจสอบ Google Sheet ของคุณ`);
+        console.log('✅ Test send with Total Exercise Time successful:', result);
+        alert(`การทดสอบ Total Exercise Time สำเร็จ!\nประเภทการออกกำลังกาย: วิ่ง 🏃‍♂️\nเวลาครั้งนี้: ${testExerciseTime} นาที\nเวลารวมเก่า: ${currentTotalTime} นาที\nเวลารวมใหม่: ${testNewTotalTime} นาที\nตรวจสอบ Google Sheet ของคุณ`);
     } catch (error) {
         console.log('❌ Test send failed:', error);
         alert(`การทดสอบล้มเหลว: ${error.message}`);

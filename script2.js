@@ -8,7 +8,7 @@ const db = getFirestore();
 const appId = 'default-app-id';
 
 // Sheet.best API URL
-const SHEET_BEST_URL = 'https://sheet.best/api/sheets/49762d95-6c55-4a1f-9a48-0169dce585d6';
+const SHEET_BEST_URL = 'https://sheet.best/api/sheets/c7f9ae9a-a030-4148-92fe-a0572c703e45';
 
 // Global variables
 let currentPhotoData = null;

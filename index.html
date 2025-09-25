@@ -3,13 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ขยับแลกแต้ม - ระบบสมาชิก</title>
+    <title>ขยะแลกแต้ม - ระบบสมาชิก</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Custom Stylesheet -->
     <link href="style.css" rel="stylesheet">
+    <style>
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+        }
+        .password-toggle:hover {
+            color: #374151;
+        }
+        .password-input-container {
+            position: relative;
+        }
+    </style>
 </head>
 <body class="gradient-bg">
     <!-- Notification System -->
@@ -31,7 +48,7 @@
     <div class="w-56 h-56 mx-auto mb-4">
         <img src="logo.PNG" alt="logo" class="w-full h-full object-cover rounded-full shadow-lg">
     </div>
-    <h1 class="text-6xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">ขยับแลกแต้ม</h1>
+    <h1 class="text-6xl font-bold bg-gradient-to-r from-green-600 to-green-800 bg-clip-text text-transparent mb-2">ขยะแลกแต้ม</h1>
     <p class="text-gray-600 text-xl">ระบบจัดการสมาชิก</p>
 </div>
 
@@ -64,15 +81,16 @@
         <label>อีเมล</label>
     </div>
 
-    <div class="floating-label">
+    <div class="floating-label password-input-container">
         <input
             type="password"
             id="loginPassword"
             placeholder=" "
-            class="form-input w-full px-4 py-4 rounded-xl focus:outline-none bg-white"
+            class="form-input w-full px-4 py-4 pr-12 rounded-xl focus:outline-none bg-white"
             oninput="checkLoginForm()"
         >
         <label>รหัสผ่าน</label>
+        <i class="fas fa-eye password-toggle" id="loginPasswordToggle" onclick="toggleLoginPassword()"></i>
     </div>
 
                 <button
@@ -133,15 +151,16 @@
                         ข้อมูลบัญชี
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        
-                    <div class="floating-label">
-                        <input type="email" id="email" placeholder=" " class="form-input w-full px-4 py-3 rounded-xl focus:outline-none bg-white" required>
-                        <label>อีเมล</label>
-                    </div>
+                    <div class="grid grid-cols-1 gap-4">
                         <div class="floating-label">
-                            <input type="password" id="password" placeholder=" " class="form-input px-4 py-3 rounded-xl focus:outline-none bg-white w-full" required oninput="checkPasswordStrength()">
+                            <input type="email" id="email" placeholder=" " class="form-input w-full px-4 py-3 rounded-xl focus:outline-none bg-white" required>
+                            <label>อีเมล</label>
+                        </div>
+                        
+                        <div class="floating-label password-input-container">
+                            <input type="password" id="password" placeholder=" " class="form-input px-4 py-3 pr-12 rounded-xl focus:outline-none bg-white w-full" required oninput="checkPasswordStrength()">
                             <label>รหัสผ่าน</label>
+                            <i class="fas fa-eye password-toggle" id="passwordToggle" onclick="togglePassword()"></i>
                         </div>
                     </div>
                     
@@ -160,7 +179,6 @@
                         <i class="fas fa-address-book mr-2 text-blue-600"></i>
                         ข้อมูลติดต่อ
                     </h3>
-                    
                     
                     <div class="floating-label">
                         <input type="tel" id="phone" placeholder=" " class="form-input w-full px-4 py-3 rounded-xl focus:outline-none bg-white" required pattern="[0-9]{10}" maxlength="10">
@@ -370,7 +388,260 @@
             </button>
         </div>
     </div>
-    <div></div>
+
+    <script>
+        // Function to toggle password visibility for login form
+        function toggleLoginPassword() {
+            const passwordField = document.getElementById('loginPassword');
+            const toggleIcon = document.getElementById('loginPasswordToggle');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.className = 'fas fa-eye-slash password-toggle';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.className = 'fas fa-eye password-toggle';
+            }
+        }
+
+        // Function to toggle password visibility for registration form
+        function togglePassword() {
+            const passwordField = document.getElementById('password');
+            const toggleIcon = document.getElementById('passwordToggle');
+            
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.className = 'fas fa-eye-slash password-toggle';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.className = 'fas fa-eye password-toggle';
+            }
+        }
+
+        // Page navigation functions
+        function goToPage1() {
+            document.getElementById('page1').classList.remove('hidden');
+            document.getElementById('page2').classList.add('hidden');
+        }
+
+        function goToPage2() {
+            document.getElementById('page1').classList.add('hidden');
+            document.getElementById('page2').classList.remove('hidden');
+        }
+
+        // Login form validation
+        function checkLoginForm() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const loginBtn = document.getElementById('loginBtn');
+            
+            if (email.trim() && password.trim()) {
+                loginBtn.classList.remove('btn-disabled');
+                loginBtn.disabled = false;
+            } else {
+                loginBtn.classList.add('btn-disabled');
+                loginBtn.disabled = true;
+            }
+        }
+
+        // Placeholder functions for other functionalities
+        function takePhoto() {
+            document.getElementById('photoInput').click();
+        }
+
+        function handlePhotoSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('photoPreview');
+                    const placeholder = document.getElementById('cameraPlaceholder');
+                    const overlay = document.getElementById('photoOverlay');
+                    
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    overlay.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            if (password.length > 0) {
+                strengthDiv.classList.remove('hidden');
+                
+                let strength = 0;
+                let text = '';
+                let color = '';
+                
+                if (password.length >= 8) strength++;
+                if (/[A-Z]/.test(password)) strength++;
+                if (/[a-z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                
+                switch (strength) {
+                    case 0:
+                    case 1:
+                        text = 'รหัสผ่านอ่อนแอ';
+                        color = '#ef4444';
+                        break;
+                    case 2:
+                    case 3:
+                        text = 'รหัสผ่านปานกลาง';
+                        color = '#f59e0b';
+                        break;
+                    case 4:
+                    case 5:
+                        text = 'รหัสผ่านแข็งแรง';
+                        color = '#10b981';
+                        break;
+                }
+                
+                strengthFill.style.width = (strength * 20) + '%';
+                strengthFill.style.backgroundColor = color;
+                strengthText.textContent = text;
+                strengthText.style.color = color;
+            } else {
+                strengthDiv.classList.add('hidden');
+            }
+        }
+
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            
+            if (weight && height) {
+                const heightInMeters = height / 100;
+                const bmi = weight / (heightInMeters * heightInMeters);
+                
+                const bmiResult = document.getElementById('bmiResult');
+                const bmiValue = document.getElementById('bmiValue');
+                const bmiCategory = document.getElementById('bmiCategory');
+                const bmiIcon = document.getElementById('bmiIcon');
+                const bmiIndicator = document.getElementById('bmiIndicator');
+                const bmiAdvice = document.getElementById('bmiAdvice');
+                
+                bmiValue.textContent = bmi.toFixed(1);
+                bmiResult.classList.remove('hidden');
+                
+                let category, icon, color, position, advice;
+                
+                if (bmi < 18.5) {
+                    category = 'น้ำหนักต่ำ';
+                    icon = '⚠️';
+                    color = '#3b82f6';
+                    position = ((bmi / 18.5) * 25) + '%';
+                    advice = 'ควรเพิ่มน้ำหนักและปรึกษาแพทย์เพื่อสุขภาพที่ดี';
+                } else if (bmi >= 18.5 && bmi < 25) {
+                    category = 'น้ำหนักปกติ';
+                    icon = '✅';
+                    color = '#10b981';
+                    position = (25 + ((bmi - 18.5) / (25 - 18.5)) * 25) + '%';
+                    advice = 'น้ำหนักอยู่ในเกณฑ์ที่เหมาะสม รักษาน้ำหนักให้คงที่';
+                } else if (bmi >= 25 && bmi < 30) {
+                    category = 'น้ำหนักเกิน';
+                    icon = '⚠️';
+                    color = '#f59e0b';
+                    position = (50 + ((bmi - 25) / (30 - 25)) * 25) + '%';
+                    advice = 'ควรควบคุมอาหารและออกกำลังกายเป็นประจำ';
+                } else {
+                    category = 'อ้วน';
+                    icon = '🚨';
+                    color = '#ef4444';
+                    position = (75 + Math.min((bmi - 30) / 10, 1) * 25) + '%';
+                    advice = 'ควรปรึกษาแพทย์เพื่อวางแผนลดน้ำหนักอย่างปลอดภัย';
+                }
+                
+                bmiCategory.textContent = category;
+                bmiIcon.textContent = icon;
+                bmiIcon.style.backgroundColor = color;
+                bmiIndicator.style.left = position;
+                bmiAdvice.textContent = advice;
+            }
+        }
+
+        function showBMIInfo() {
+            document.getElementById('bmiInfoModal').classList.remove('hidden');
+        }
+
+        function closeBMIInfo() {
+            document.getElementById('bmiInfoModal').classList.add('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        // Mock login function
+        window.login = function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (email && password) {
+                document.getElementById('loadingOverlay').classList.remove('hidden');
+                
+                setTimeout(() => {
+                    document.getElementById('loadingOverlay').classList.add('hidden');
+                    document.getElementById('successModal').classList.remove('hidden');
+                }, 2000);
+            }
+        };
+
+        // Form submission handler
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                document.getElementById('successModal').classList.remove('hidden');
+            }, 3000);
+        });
+
+        // Progress bar update
+        function updateProgress() {
+            const inputs = document.querySelectorAll('#registrationForm input[required], #registrationForm select[required]');
+            let filledInputs = 0;
+            
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    filledInputs++;
+                }
+            });
+            
+            const progress = (filledInputs / inputs.length) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('progressText').textContent = Math.round(progress) + '%';
+            
+            // Enable submit button if all fields are filled
+            const submitBtn = document.getElementById('submitBtn');
+            if (progress === 100) {
+                submitBtn.classList.remove('btn-disabled');
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.classList.add('btn-disabled');
+                submitBtn.disabled = true;
+            }
+        }
+
+        // Add event listeners to all form inputs for progress tracking
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('#registrationForm input, #registrationForm select');
+            inputs.forEach(input => {
+                input.addEventListener('input', updateProgress);
+                input.addEventListener('change', updateProgress);
+            });
+        });
+    </script>
+
     <!-- Custom JavaScript -->
     <script type="module" src="script.js"></script>
 </body>
